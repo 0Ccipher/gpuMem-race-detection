@@ -58,6 +58,10 @@ bool DeclareInternalsPass::runOnModule(Module &M)
 				    {Type::getInt1Ty(M.getContext())});
 	modified |= declareInternal(M, "__VERIFIER_faiZNE_spin_end", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_lockZNE_spin_end", Type::getVoidTy(M.getContext()), {});
+
+	//Aniket
+	modified |= declareInternal(M, "__VERIFIER_memory_scope_device", Type::getVoidTy(M.getContext()), {});
+	modified |= declareInternal(M, "__VERIFIER_memory_scope_work_group", Type::getVoidTy(M.getContext()), {});
 	return modified;
 }
 

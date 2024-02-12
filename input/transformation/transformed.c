@@ -5,14 +5,14 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#define WORK_ITEMS_PER_GROUP 16
-#define WORK_ITEMS_PER_KERNEL 1024
+#define WORK_ITEMS_PER_GROUP 2
+#define WORK_ITEMS_PER_KERNEL 2
 #define GLOBAL_WORK_OFFSET 0
 struct ThreadData;
 
 //  also track the work-item offset in clEnqueueNDRangeKernel()
-void memory_scope_work_group() {};//{ printf("\nWork-group-scope\n");}
-void memory_scope_device() {};//{printf("\nDevice-scope\n");}
+void __VERIFIER_memory_scope_work_group();//{ printf("\nWork-group-scope\n");}
+void __VERIFIER_memory_scope_device();//{printf("\nDevice-scope\n");}
 atomic_int X = 0;
 atomic_int Y = 0;
 // __global int X = 0;
@@ -35,14 +35,14 @@ void *kernel1( void *arg) {
     int group_id = data->group_id;
     printf("\n Kernel 1 Group : %d , LocalItemID: %d , GlobalItemID: %d" ,group_id , local_id ,global_id);
     
-    memory_scope_work_group();
+    __VERIFIER_memory_scope_work_group();
     atomic_store_explicit(&Y, 1, memory_order_relaxed);
 
-    memory_scope_work_group();
+    __VERIFIER_memory_scope_work_group();
     int value = atomic_load_explicit(&X, memory_order_relaxed);
     
 
-    memory_scope_device();
+    __VERIFIER_memory_scope_device();
     atomic_store_explicit(&buffer[0], value, memory_order_relaxed);
 
     return NULL;
@@ -56,13 +56,13 @@ void *kernel2(void *arg) {
     int index = global_id-GLOBAL_WORK_OFFSET % 5;
     printf("\n Kernel 2 Group : %d , LocalItemID: %d , GlobalItemID: %d" ,group_id , local_id ,global_id);
      
-    memory_scope_work_group();
+    __VERIFIER_memory_scope_work_group();
     atomic_store_explicit(&X, 1, memory_order_relaxed);
 
-    memory_scope_work_group();
+    __VERIFIER_memory_scope_work_group();
     int value = atomic_load_explicit(&Y, memory_order_relaxed);
 
-    memory_scope_device();
+    __VERIFIER_memory_scope_device();
     atomic_store_explicit(&buffer[1], value, memory_order_relaxed);
 
     return NULL;

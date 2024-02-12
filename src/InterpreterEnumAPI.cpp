@@ -77,6 +77,11 @@ const std::unordered_map<std::string, InternalFunctions> internalFunNames = {
 	/* Some C++ calls */
 	{"_Znwm", InternalFunctions::FN_Malloc},
 	{"_ZdlPv", InternalFunctions::FN_Free},
+
+	// Aniket
+	{"__VERIFIER_memory_scope_device", InternalFunctions::FN_memory_scope_device},
+	{"__VERIFIER_memory_scope_work_group", InternalFunctions::FN_memory_scope_work_group},
+
 };
 
 const std::unordered_map<SystemError, std::string, ENUM_HASH(SystemError)> errorList = {

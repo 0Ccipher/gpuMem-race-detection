@@ -2839,6 +2839,20 @@ void Interpreter::callLoopBegin(Function *F, const std::vector<GenericValue> &Ar
 	driver->visitLoopBegin(LoopBeginLabel::create(nextPos()));
 }
 
+void Interpreter::callmemory_scope_device(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	// driver->visitmemory_scope_device(memory_scope_deviceLabel::create(nextPos()));
+	WARN("This is device scope");
+}
+
+void Interpreter::callmemory_scope_work_group(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	// driver->visitmemory_scope_work_group(memory_scope_work_groupLabel::create(nextPos()));
+	WARN("This is work-group scope");
+}
+
 void Interpreter::callSpinStart(Function *F, const std::vector<GenericValue> &ArgVals,
 				const std::unique_ptr<EventDeps> &specialDeps)
 {
@@ -4543,6 +4557,11 @@ void Interpreter::callInternalFunction(Function *F, const std::vector<GenericVal
 		CALL_INTERNAL_FUNCTION(RCUReadLockLKMM);
 		CALL_INTERNAL_FUNCTION(RCUReadUnlockLKMM);
 		CALL_INTERNAL_FUNCTION(SynchronizeRCULKMM);
+
+		//Aniket
+		CALL_INTERNAL_FUNCTION(memory_scope_device);
+		CALL_INTERNAL_FUNCTION(memory_scope_work_group);
+		
 	default:
 		BUG();
 		break;

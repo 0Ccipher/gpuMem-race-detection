@@ -771,6 +771,9 @@ private:  // Helper functions
   DECLARE_CUSTOM_OPCODE(RCUReadUnlockLKMM);
   DECLARE_CUSTOM_OPCODE(SynchronizeRCULKMM);
 
+  DECLARE_CUSTOM_OPCODE(memory_scope_device);
+  DECLARE_CUSTOM_OPCODE(memory_scope_work_group);
+
   void callInternalFunction(Function *F, const std::vector<GenericValue> &ArgVals,
 			    const std::unique_ptr<EventDeps> &deps);
 

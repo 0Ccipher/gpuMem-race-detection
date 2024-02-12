@@ -121,6 +121,10 @@ enum class InternalFunctions {
 	FN_RCUReadUnlockLKMM,
 	FN_SynchronizeRCULKMM,
 	/* LKMM ops */
+	
+	//Aniket
+	FN_memory_scope_device,
+	FN_memory_scope_work_group,
 };
 
 extern const std::unordered_map<std::string, InternalFunctions> internalFunNames;

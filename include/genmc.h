@@ -45,6 +45,10 @@ void __VERIFIER_loop_begin(void) __attribute__ ((__nothrow__));
 void __VERIFIER_spin_start(void) __attribute__ ((__nothrow__));
 void __VERIFIER_spin_end(int) __attribute__ ((__nothrow__));
 
+// TODO Aniket : Implement these
+void __VERIFIER_memory_scope_device(void) __attribute__ ((__nothrow__));
+void __VERIFIER_memory_scope_work_group(void) __attribute__ ((__nothrow__));
+
 /*
  * Marker function that denotes that a store is local.
  * Since non-local stores may preclude the spin-assume transformation,
