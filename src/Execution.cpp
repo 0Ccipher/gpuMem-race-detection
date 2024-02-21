@@ -2842,15 +2842,14 @@ void Interpreter::callLoopBegin(Function *F, const std::vector<GenericValue> &Ar
 void Interpreter::callmemory_scope_device(Function *F, const std::vector<GenericValue> &ArgVals,
 				const std::unique_ptr<EventDeps> &specialDeps)
 {
-	// driver->visitmemory_scope_device(memory_scope_deviceLabel::create(nextPos()));
-	WARN("This is device scope");
+	driver->visitUpdateScope(1);
+
 }
 
 void Interpreter::callmemory_scope_work_group(Function *F, const std::vector<GenericValue> &ArgVals,
 				const std::unique_ptr<EventDeps> &specialDeps)
 {
-	// driver->visitmemory_scope_work_group(memory_scope_work_groupLabel::create(nextPos()));
-	WARN("This is work-group scope");
+	driver->visitUpdateScope(2);
 }
 
 void Interpreter::callSpinStart(Function *F, const std::vector<GenericValue> &ArgVals,

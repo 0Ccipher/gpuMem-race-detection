@@ -5,8 +5,8 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#define WORK_ITEMS_PER_GROUP 2
-#define WORK_ITEMS_PER_KERNEL 2
+#define WORK_ITEMS_PER_GROUP 1
+#define WORK_ITEMS_PER_KERNEL 1
 #define GLOBAL_WORK_OFFSET 0
 struct ThreadData;
 
@@ -33,7 +33,7 @@ void *kernel1( void *arg) {
     int global_id = data->global_id;
     int local_id = data->local_id;
     int group_id = data->group_id;
-    printf("\n Kernel 1 Group : %d , LocalItemID: %d , GlobalItemID: %d" ,group_id , local_id ,global_id);
+    // printf("\n Kernel 1 Group : %d , LocalItemID: %d , GlobalItemID : %d \n" ,group_id , local_id ,global_id);
     
     __VERIFIER_memory_scope_work_group();
     atomic_store_explicit(&Y, 1, memory_order_relaxed);
@@ -54,7 +54,7 @@ void *kernel2(void *arg) {
     int local_id = data->local_id;
     int group_id = data->group_id;
     int index = global_id-GLOBAL_WORK_OFFSET % 5;
-    printf("\n Kernel 2 Group : %d , LocalItemID: %d , GlobalItemID: %d" ,group_id , local_id ,global_id);
+    // printf("\n Kernel 2 Group : %d , LocalItemID: %d , GlobalItemID: %d \n" ,group_id , local_id ,global_id);
      
     __VERIFIER_memory_scope_work_group();
     atomic_store_explicit(&X, 1, memory_order_relaxed);
@@ -122,6 +122,6 @@ int main(int argc, char **argv){
         pthread_join(workItems[i] , NULL);
     }
 
-	printf("\n");
+	printf("_____________________________________\n");
   return 0;
 }

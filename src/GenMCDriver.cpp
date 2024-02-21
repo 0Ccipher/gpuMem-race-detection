@@ -1808,6 +1808,10 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	 * consistency checks may be triggered if the access is invalid */
 	g.trackCoherenceAtLoc(rLab->getAddr());
 
+	rLab->setScope(scope);
+	WARN("Load :(" + to_string(rLab->getPos().thread)+ ","+to_string(rLab->getPos().index) + 
+			") scope : "+to_string(rLab->getScope())+"\n");	
+
 	rLab->setAnnot(EE->getCurrentAnnotConcretized());
 	updateLabelViews(rLab.get(), deps);
 	auto *lab = g.addReadLabelToGraph(std::move(rLab));
@@ -1816,7 +1820,6 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 		visitError(lab->getPos(), Status::VS_AccessNonMalloc);
 		return SVal(0); /* Return some value; this execution will be blocked */
 	}
-
 	/* Get an approximation of the stores we can read from */
 	auto stores = getRfsApproximation(lab);
 	BUG_ON(stores.empty());
@@ -1913,6 +1916,11 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	/* If it's a valid access, track coherence for this location */
 	g.trackCoherenceAtLoc(wLab->getAddr());
 
+	wLab->setScope(scope);
+	WARN("Store :(" + to_string(wLab->getPos().thread)+ ","+to_string(wLab->getPos().index) + 
+			") scope : "+to_string(wLab->getScope())+"\n");	
+
+
 	if (getConf()->helper && g.isRMWStore(&*wLab))
 		annotateStoreHELPER(&*wLab);
 	updateLabelViews(wLab.get(), deps);
@@ -1922,7 +1930,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		visitError(lab->getPos(), Status::VS_AccessNonMalloc);
 		return;
 	}
-
+	
 	/* Find all possible placings in coherence for this store */
 	auto placesRange = g.getCoherentPlacings(lab->getAddr(), lab->getPos(), g.isRMWStore(lab));
 	auto &begO = placesRange.first;
@@ -2958,6 +2966,10 @@ void GenMCDriver::visitLoopBegin(std::unique_ptr<LoopBeginLabel> lab)
 	updateLabelViews(lab.get(), nullptr);
 	getGraph().addOtherLabelToGraph(std::move(lab));
 	return;
+}
+
+void GenMCDriver::visitUpdateScope(int scope) {
+	updateScope(scope);
 }
 
 bool GenMCDriver::isWriteEffectful(const WriteLabel *wLab)

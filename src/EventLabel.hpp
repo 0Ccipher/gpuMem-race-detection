@@ -228,8 +228,12 @@ public:
 
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream& rhs,
 					     const EventLabel &lab);
-
+	void setScope(int s){ scope = s;};
+	short int getScope() {return scope;};
 private:
+	/*Scope of the event 1=device , 2=work-group */
+	short int scope = -1; 
+	
 	/* Discriminator enum for LLVM-style RTTI */
 	const EventLabelKind kind;
 

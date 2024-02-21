@@ -243,6 +243,9 @@ public:
 	/* A call to __VERIFIER_loop_begin() has been interpreted */
 	void
 	visitLoopBegin(std::unique_ptr<LoopBeginLabel> lab);
+	
+	/* Visit instruction to update the scope*/
+	void visitUpdateScope(int scope);
 
 	/* A call to __VERIFIER_spin_start() has been interpreted */
 	void visitSpinStart(std::unique_ptr<SpinStartLabel> lab);
@@ -747,6 +750,16 @@ private:
 	 * consistency calculation */
 	virtual void initConsCalculation() = 0;
 
+	/* Get the current scope */
+	short int getScope(){
+		return scope;
+	}
+
+	/* Update the current scope */
+	void updateScope(int s){
+		scope = s;
+	}
+	
 #ifdef ENABLE_GENMC_DEBUG
 	void checkForDuplicateRevisit(const ReadLabel *rLab, const WriteLabel *sLab);
 #endif
@@ -794,6 +807,9 @@ private:
 
 	/* Dbg: Random-number generator for scheduling randomization */
 	MyRNG rng;
+
+	/*Current scope value 1=device , 2=work-group*/
+	short int scope = -1;
 
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream &s,
 					     const Status &r);
