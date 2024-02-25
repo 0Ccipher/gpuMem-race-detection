@@ -2852,6 +2852,45 @@ void Interpreter::callmemory_scope_work_group(Function *F, const std::vector<Gen
 	driver->visitUpdateScope(2);
 }
 
+void Interpreter::callthread_global_id(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	Argument *firstArg = &*F->arg_begin();
+	GenericValue firstArgValue = ArgVals[0];
+	int thr_id = ArgVals[0].IntVal.getLimitedValue();
+	// WARN(""+F->getName()+" - "+firstArg->getName()+" id : "+std::to_string(thr_id)+"\n");
+	getCurThr().global_id = thr_id;
+}
+
+void Interpreter::callthread_local_id(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	Argument *firstArg = &*F->arg_begin();
+	GenericValue firstArgValue = ArgVals[0];
+	int thr_id = ArgVals[0].IntVal.getLimitedValue();
+	// WARN(""+F->getName()+" - "+firstArg->getName()+" id : "+std::to_string(thr_id)+"\n");
+	getCurThr().local_id = thr_id;
+}
+
+void Interpreter::callthread_group_id(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	Argument *firstArg = &*F->arg_begin();
+	GenericValue firstArgValue = ArgVals[0];
+	int thr_id = ArgVals[0].IntVal.getLimitedValue();
+	// WARN(""+F->getName()+" - "+firstArg->getName()+" id : "+std::to_string(thr_id)+"\n");
+	getCurThr().group_id = thr_id;
+}
+
+void Interpreter::callthread_kernel_id(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	Argument *firstArg = &*F->arg_begin();
+	GenericValue firstArgValue = ArgVals[0];
+	int thr_id = ArgVals[0].IntVal.getLimitedValue();
+	// WARN(""+F->getName()+" - "+firstArg->getName()+" id : "+std::to_string(thr_id)+"\n");
+	getCurThr().kernel_id = thr_id;
+}
 void Interpreter::callSpinStart(Function *F, const std::vector<GenericValue> &ArgVals,
 				const std::unique_ptr<EventDeps> &specialDeps)
 {
@@ -4560,6 +4599,10 @@ void Interpreter::callInternalFunction(Function *F, const std::vector<GenericVal
 		//Aniket
 		CALL_INTERNAL_FUNCTION(memory_scope_device);
 		CALL_INTERNAL_FUNCTION(memory_scope_work_group);
+		CALL_INTERNAL_FUNCTION(thread_global_id);
+		CALL_INTERNAL_FUNCTION(thread_local_id);
+		CALL_INTERNAL_FUNCTION(thread_group_id);
+		CALL_INTERNAL_FUNCTION(thread_kernel_id);
 		
 	default:
 		BUG();

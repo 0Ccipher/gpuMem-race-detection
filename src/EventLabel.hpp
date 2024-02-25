@@ -230,10 +230,19 @@ public:
 					     const EventLabel &lab);
 	void setScope(int s){ scope = s;};
 	short int getScope() {return scope;};
+
+	void setGroupId(int gid){ group_id = gid;};
+	int getGroupId() { return group_id;};
+	void setKernelId(int gid){ kernel_id = gid;};
+	int getKernelId() { return kernel_id;};
+
 private:
 	/*Scope of the event 1=device , 2=work-group */
-	short int scope = -1; 
-	
+	short int scope = -1;
+	/*Work grpup of this event*/
+	int group_id = -1;
+	/*kernel of this event*/
+	int kernel_id = -1;
 	/* Discriminator enum for LLVM-style RTTI */
 	const EventLabelKind kind;
 

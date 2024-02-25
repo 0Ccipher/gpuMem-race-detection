@@ -81,6 +81,10 @@ const std::unordered_map<std::string, InternalFunctions> internalFunNames = {
 	// Aniket
 	{"__VERIFIER_memory_scope_device", InternalFunctions::FN_memory_scope_device},
 	{"__VERIFIER_memory_scope_work_group", InternalFunctions::FN_memory_scope_work_group},
+	{"__VERIFIER_thread_global_id", InternalFunctions::FN_thread_global_id},
+	{"__VERIFIER_thread_local_id", InternalFunctions::FN_thread_local_id},
+	{"__VERIFIER_thread_group_id", InternalFunctions::FN_thread_group_id},
+	{"__VERIFIER_thread_kernel_id", InternalFunctions::FN_thread_kernel_id},
 
 };
 

@@ -163,6 +163,10 @@ public:
 
 	int id;
 	int parentId;
+  int global_id = -1;
+  int local_id = -1;
+  int group_id = -1;
+  int kernel_id = -1;
 	llvm::Function *threadFun;
 	SVal threadArg;
 	std::vector<llvm::ExecutionContext> ECStack;
@@ -773,6 +777,10 @@ private:  // Helper functions
 
   DECLARE_CUSTOM_OPCODE(memory_scope_device);
   DECLARE_CUSTOM_OPCODE(memory_scope_work_group);
+  DECLARE_CUSTOM_OPCODE(thread_global_id);
+  DECLARE_CUSTOM_OPCODE(thread_local_id);
+  DECLARE_CUSTOM_OPCODE(thread_group_id);
+  DECLARE_CUSTOM_OPCODE(thread_kernel_id);
 
   void callInternalFunction(Function *F, const std::vector<GenericValue> &ArgVals,
 			    const std::unique_ptr<EventDeps> &deps);

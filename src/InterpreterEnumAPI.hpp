@@ -125,6 +125,10 @@ enum class InternalFunctions {
 	//Aniket
 	FN_memory_scope_device,
 	FN_memory_scope_work_group,
+	FN_thread_global_id,
+	FN_thread_local_id,
+	FN_thread_group_id,
+	FN_thread_kernel_id,
 };
 
 extern const std::unordered_map<std::string, InternalFunctions> internalFunNames;

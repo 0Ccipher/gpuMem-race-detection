@@ -1809,8 +1809,11 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	g.trackCoherenceAtLoc(rLab->getAddr());
 
 	rLab->setScope(scope);
+	rLab->setGroupId(EE->getCurThr().group_id);
+	rLab->setKernelId(EE->getCurThr().kernel_id);
 	WARN("Load :(" + to_string(rLab->getPos().thread)+ ","+to_string(rLab->getPos().index) + 
-			") scope : "+to_string(rLab->getScope())+"\n");	
+			") scope : "+to_string(rLab->getScope())+" Group id : " + to_string(rLab->getGroupId())+
+			" Kernel id : " + to_string(rLab->getKernelId())+"\n");	
 
 	rLab->setAnnot(EE->getCurrentAnnotConcretized());
 	updateLabelViews(rLab.get(), deps);
@@ -1917,8 +1920,11 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	g.trackCoherenceAtLoc(wLab->getAddr());
 
 	wLab->setScope(scope);
+	wLab->setGroupId(EE->getCurThr().group_id);
+	wLab->setKernelId(EE->getCurThr().kernel_id);
 	WARN("Store :(" + to_string(wLab->getPos().thread)+ ","+to_string(wLab->getPos().index) + 
-			") scope : "+to_string(wLab->getScope())+"\n");	
+			") scope : "+to_string(wLab->getScope())+" Group id : " + to_string(wLab->getGroupId())+
+			" Kernel id : " + to_string(wLab->getKernelId())+"\n");	
 
 
 	if (getConf()->helper && g.isRMWStore(&*wLab))
