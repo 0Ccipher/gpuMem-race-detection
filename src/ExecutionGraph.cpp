@@ -683,7 +683,6 @@ Calculator::CalculationResult ExecutionGraph::doCalcs(bool full /* = false */)
 			continue;
 
 		result |= calcs[i]->doCalc();
-
 		/* If an inconsistency was spotted, no reason to call
 		 * the other calculators */
 		if (!result.cons)

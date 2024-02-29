@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #define WORK_ITEMS_PER_GROUP 1
-#define WORK_ITEMS_PER_KERNEL 2
+#define WORK_ITEMS_PER_KERNEL 1
 #define GLOBAL_WORK_OFFSET 0
 struct ThreadData;
 
@@ -23,7 +23,7 @@ atomic_int Y = 0;
 // __global ient Y = 0;
 atomic_int buffer[5] = {0}; //globalArray from host, which is passed to kernels
 
-
+int a1 , a2;
 struct ThreadData
 {
     int local_id;
@@ -45,14 +45,13 @@ void *kernel1( void *arg) {
     // printf("\n Kernel 1 Group : %d , LocalItemID: %d , GlobalItemID : %d \n" ,group_id , local_id ,global_id);
     
     __VERIFIER_memory_scope_work_group();
-    atomic_store_explicit(&Y, 1, memory_order_relaxed);
+    atomic_store_explicit(&X, 1, memory_order_release);
 
     __VERIFIER_memory_scope_work_group();
-    int value = atomic_load_explicit(&X, memory_order_relaxed);
-    
-
-    __VERIFIER_memory_scope_device();
-    atomic_store_explicit(&buffer[0], value, memory_order_relaxed);
+    int value = atomic_load_explicit(&X, memory_order_acquire);
+    a1 = value;
+    // __VERIFIER_memory_scope_device();
+    // atomic_store_explicit(&buffer[0], value, memory_order_release);
 
     return NULL;
 }
@@ -71,13 +70,13 @@ void *kernel2(void *arg) {
     // printf("\n Kernel 2 Group : %d , LocalItemID: %d , GlobalItemID: %d \n" ,group_id , local_id ,global_id);
      
     __VERIFIER_memory_scope_work_group();
-    atomic_store_explicit(&X, 1, memory_order_relaxed);
+    atomic_store_explicit(&X, 21, memory_order_release);
 
     __VERIFIER_memory_scope_work_group();
-    int value = atomic_load_explicit(&Y, memory_order_relaxed);
-
-    __VERIFIER_memory_scope_device();
-    atomic_store_explicit(&buffer[1], value, memory_order_relaxed);
+    int value = atomic_load_explicit(&X, memory_order_acquire);
+    a2=value;
+    // __VERIFIER_memory_scope_device();
+    // atomic_store_explicit(&buffer[1], value, memory_order_release);
 
     return NULL;
 }
@@ -140,6 +139,7 @@ int main(int argc, char **argv){
         pthread_join(workItems[i] , NULL);
     }
 
+    printf("a1 : %d , a2 : %d \n",a1,a2);
 	printf("_____________________________________\n");
   return 0;
 }

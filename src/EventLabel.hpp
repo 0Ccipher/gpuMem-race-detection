@@ -229,12 +229,12 @@ public:
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream& rhs,
 					     const EventLabel &lab);
 	void setScope(int s){ scope = s;};
-	short int getScope() {return scope;};
+	const short int getScope() const {return scope;};
 
 	void setGroupId(int gid){ group_id = gid;};
-	int getGroupId() { return group_id;};
+	const int getGroupId() const { return group_id;};
 	void setKernelId(int gid){ kernel_id = gid;};
-	int getKernelId() { return kernel_id;};
+	const int getKernelId() const { return kernel_id;};
 
 private:
 	/*Scope of the event 1=device , 2=work-group */

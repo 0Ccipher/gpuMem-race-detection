@@ -78,7 +78,10 @@ void RC11Driver::calcReadViews(ReadLabel *lab)
 		porf.update(rfLab->getPorfView());
 		if (lab->isAtLeastAcquire()) {
 			if (auto *wLab = llvm::dyn_cast<WriteLabel>(rfLab))
-				hb.update(wLab->getMsgView());
+				if((lab->getScope()==2 && wLab->getScope()==2 && lab->getKernelId() == wLab->getKernelId() ) 
+					|| (lab->getScope()==1 && wLab->getScope()==1) || (lab->getScope() == -1)){
+					hb.update(wLab->getMsgView());
+				}
 		}
 	}
 
