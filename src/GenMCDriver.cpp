@@ -1616,6 +1616,12 @@ void GenMCDriver::visitFence(std::unique_ptr<FenceLabel> fLab, const EventDeps *
 	if (isExecutionDrivenByGraph())
 		return;
 
+	fLab->setScope(scope);
+	fLab->setGroupId(EE->getCurThr().group_id);
+	fLab->setKernelId(EE->getCurThr().kernel_id);
+	WARN("fence :(" + to_string(fLab->getPos().thread)+ ","+to_string(fLab->getPos().index) + 
+			") scope : "+to_string(fLab->getScope())+" Group id : " + to_string(fLab->getGroupId())+
+			" Kernel id : " + to_string(fLab->getKernelId())+"\n");	
 	updateLabelViews(fLab.get(), deps);
 	getGraph().addOtherLabelToGraph(std::move(fLab));
 	return;

@@ -40,6 +40,7 @@ private:
 	View calcBasicHbView(Event e) const;
 	View calcBasicPorfView(Event e) const;
 	void calcWriteMsgView(WriteLabel *lab);
+	View calcWriteMsgViewScoped(const WriteLabel *lab, Event acq , int scope, int group , int kernel);
 	void calcRMWWriteMsgView(WriteLabel *lab);
 
 	void calcBasicViews(EventLabel *lab);
@@ -48,7 +49,7 @@ private:
 	void calcFenceViews(FenceLabel *lab);
 	void calcStartViews(ThreadStartLabel *lab);
 	void calcJoinViews(ThreadJoinLabel *lab);
-	void calcFenceRelRfPoBefore(Event last, View &v);
+	void calcFenceRelRfPoBefore(Event last, View &v, int scope, int group , int kernel);
 
 	/* Returns true if aLab and bLab are in an RC11 data race*/
 	bool areInDataRace(const MemAccessLabel *aLab, const MemAccessLabel *bLab);

@@ -34,21 +34,27 @@ struct ThreadData
 void wg1(){
     printf("group-0 \n");
     __VERIFIER_memory_scope_device();
-    atomic_store_explicit(&X, 42, memory_order_release);
+    atomic_store_explicit(&X, 42, memory_order_relaxed);
 
-    __VERIFIER_memory_scope_work_group();
-    atomic_store_explicit(&Y, 1, memory_order_release);
+     __VERIFIER_memory_scope_device();
+    atomic_thread_fence(memory_order_release);
+
+    __VERIFIER_memory_scope_device();
+    atomic_store_explicit(&Y, 42, memory_order_relaxed);
 }
 
 void wg2(){
     printf("group-1 \n");
     int value = -1;
-    __VERIFIER_memory_scope_work_group();
-    int tempy = atomic_load_explicit(&Y, memory_order_acquire);
-    if(tempy == 1){
-        __VERIFIER_memory_scope_device();
-        value = atomic_load_explicit(&X, memory_order_acquire);
-    }
+    __VERIFIER_memory_scope_device();
+    int tempy = atomic_load_explicit(&Y, memory_order_relaxed);
+    
+     __VERIFIER_memory_scope_device();
+    atomic_thread_fence(memory_order_acquire);
+
+    __VERIFIER_memory_scope_device();
+    value = atomic_load_explicit(&X, memory_order_relaxed);
+    
     printf("y : %d \t x : %d\n",tempy,value);
 }
 

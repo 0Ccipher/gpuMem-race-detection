@@ -25,6 +25,7 @@
 #include "GraphIterators.hpp"
 #include "PSCCalculator.hpp"
 #include "PersistencyChecker.hpp"
+#include <llvm/Support/raw_ostream.h>
 
 RC11Driver::RC11Driver(std::shared_ptr<const Config> conf, std::unique_ptr<llvm::Module> mod,
 		       std::unique_ptr<ModuleInfo> MI)
@@ -83,6 +84,10 @@ void RC11Driver::calcReadViews(ReadLabel *lab)
 					|| (lab->getScope()==1 && wLab->getScope()==1) || (lab->getScope() == -1)){
 					hb.update(wLab->getMsgView());
 				}
+				else{
+					hb.update(calcWriteMsgViewScoped(wLab , lab->getPos(),lab->getScope(),
+								lab->getGroupId(), lab->getKernelId()));;
+				}
 		}
 	}
 
@@ -115,6 +120,23 @@ void RC11Driver::calcWriteMsgView(WriteLabel *lab)
 	lab->setMsgView(std::move(msg));
 }
 
+View RC11Driver::calcWriteMsgViewScoped(const WriteLabel *lab, Event acq, int scope, int group , int kernel)
+{
+	const auto &g = getGraph();
+	auto * acqLab = g.getEventLabel(acq);
+	/* Should only be called with plain writes */
+	BUG_ON(llvm::isa<FaiWriteLabel>(lab) || llvm::isa<CasWriteLabel>(lab));
+
+	if (lab->isAtLeastRelease())
+	if ((lab->getScope()==2 && acqLab->getScope()==2 && lab->getKernelId() == acqLab->getKernelId() 
+				&& lab->getGroupId() == acqLab->getGroupId()) 
+			|| (lab->getScope()==1 && acqLab->getScope()==1) || (lab->getScope() == -1))
+		return lab->getHbView();
+	
+	return g.getEventLabel(g.getLastThreadReleaseAtLocScoped(lab->getPos(),
+								  lab->getAddr(), acq, scope, group , kernel))->getHbView();
+}
+
 void RC11Driver::calcRMWWriteMsgView(WriteLabel *lab)
 {
 	const auto &g = getGraph();
@@ -141,12 +163,12 @@ void RC11Driver::calcRMWWriteMsgView(WriteLabel *lab)
 	lab->setMsgView(std::move(msg));
 }
 
-void RC11Driver::calcFenceRelRfPoBefore(Event last, View &v)
+void RC11Driver::calcFenceRelRfPoBefore(Event last, View &v,int scope, int group , int kernel)
 {
 	const auto &g = getGraph();
 	for (auto i = last.index; i > 0; i--) {
 		const EventLabel *lab = g.getEventLabel(Event(last.thread, i));
-		if (llvm::isa<FenceLabel>(lab) && lab->isAtLeastAcquire())
+		if (llvm::isa<FenceLabel>(lab) && lab->isAtLeastAcquire() && lab->getScope() == g.getEventLabel(last)->getScope())
 			return;
 		if (!llvm::isa<ReadLabel>(lab))
 			continue;
@@ -154,7 +176,16 @@ void RC11Driver::calcFenceRelRfPoBefore(Event last, View &v)
 		if (rLab->isAtMostRelease()) {
 			const EventLabel *rfLab = g.getEventLabel(rLab->getRf());
 			if (auto *wLab = llvm::dyn_cast<WriteLabel>(rfLab))
-				v.update(wLab->getMsgView());
+			if ((rLab->getScope()==2 && wLab->getScope()==2 && rLab->getKernelId() == wLab->getKernelId() 
+					&& rLab->getGroupId() == wLab->getGroupId()) 
+				|| (rLab->getScope()==1 && wLab->getScope()==1) || (rLab->getScope() == -1)){
+					v.update(calcWriteMsgViewScoped(wLab,last,scope,
+								group, kernel));
+					std::string str = "";
+					llvm::raw_string_ostream s(str);
+					v.printData(s);
+					WARN("Updated " + s.str() + "\n");
+				}	
 		}
 	}
 }
@@ -167,7 +198,7 @@ void RC11Driver::calcFenceViews(FenceLabel *lab)
 	View porf = calcBasicPorfView(lab->getPos());
 
 	if (lab->isAtLeastAcquire())
-		calcFenceRelRfPoBefore(lab->getPos().prev(), hb);
+		calcFenceRelRfPoBefore(lab->getPos().prev(), hb, lab->getScope() , lab->getGroupId() , lab->getKernelId());
 
 	lab->setHbView(std::move(hb));
 	lab->setPorfView(std::move(porf));

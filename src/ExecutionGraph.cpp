@@ -108,6 +108,42 @@ Event ExecutionGraph::getLastThreadReleaseAtLoc(Event upperLimit, SAddr addr) co
 	return Event(upperLimit.thread, 0);
 }
 
+Event ExecutionGraph::getLastThreadReleaseAtLocScoped(Event upperLimit, SAddr addr , Event acq, int scope, int group , int kernel) const
+{
+	WARN("ACQ  :(" + to_string(acq.thread)+ ","+to_string(acq.index) +")\n");
+	WARN(" scope : "+to_string(scope)+" Group id : " + to_string(group)+
+		" Kernel id : " + to_string(kernel)+"\n");
+	for (int i = upperLimit.index - 1; i > 0; i--) {
+		const EventLabel *lab = getEventLabel(Event(upperLimit.thread, i));
+		if (llvm::isa<ThreadCreateLabel>(lab) || llvm::isa<ThreadFinishLabel>(lab) ||
+		    llvm::isa<UnlockLabelLAPOR>(lab)) {
+			return Event(upperLimit.thread, i);
+		}
+		if (auto *fLab = llvm::dyn_cast<FenceLabel>(lab)) {
+			if(fLab->isAtLeastRelease()){
+				WARN("REL Fence :(" + to_string(fLab->getPos().thread)+ ","+to_string(fLab->getPos().index) + 
+					") scope : "+to_string(fLab->getScope())+" Group id : " + to_string(fLab->getGroupId())+
+					" Kernel id : " + to_string(fLab->getKernelId())+"\n");
+				if((fLab->getScope()==2 && scope==2 && fLab->getKernelId() == kernel 
+							&& fLab->getGroupId() == group) 
+						|| (fLab->getScope()==1 && scope==1) || (fLab->getScope() == -1)){
+					return Event(upperLimit.thread, i);
+				}
+			}
+			
+				
+		}
+		if (auto *wLab = llvm::dyn_cast<WriteLabel>(lab)) {
+			if (wLab->isAtLeastRelease() && wLab->getAddr() == addr)
+			if((wLab->getScope()==2 && scope==2 && wLab->getKernelId() == kernel 
+					&& wLab->getGroupId() == group) 
+					|| (wLab->getScope()==1 && scope==1) || (wLab->getScope() == -1))
+				return Event(upperLimit.thread, i);
+		}
+	}
+	return Event(upperLimit.thread, 0);
+}
+
 Event ExecutionGraph::getLastThreadRelease(Event upperLimit) const
 {
 	for (int i = upperLimit.index - 1; i > 0; i--) {

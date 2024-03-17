@@ -273,6 +273,7 @@ public:
 	/* Returns the last release before upperLimit in the latter's thread.
 	 * If it's not a fence, then it has to be at location addr */
 	Event getLastThreadReleaseAtLoc(Event upperLimit, SAddr addr) const;
+	Event getLastThreadReleaseAtLocScoped(Event upperLimit, SAddr addr , Event acq ,  int scope, int group , int kernel) const;
 
 	/* Returns the last release before upperLimit in the latter's thread */
 	Event getLastThreadRelease(Event upperLimit) const;

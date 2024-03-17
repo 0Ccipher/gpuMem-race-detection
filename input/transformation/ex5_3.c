@@ -36,6 +36,8 @@ void wg1(){
     __VERIFIER_memory_scope_device();
     atomic_store_explicit(&X, 42, memory_order_release);
 
+    atomic_thread_fence(memory_order_seq_cst);
+
     __VERIFIER_memory_scope_work_group();
     atomic_store_explicit(&Y, 1, memory_order_release);
 }
@@ -46,10 +48,11 @@ void wg2(){
     __VERIFIER_memory_scope_work_group();
     int tempy = atomic_load_explicit(&Y, memory_order_acquire);
     if(tempy == 1){
+        atomic_thread_fence(memory_order_seq_cst);
         __VERIFIER_memory_scope_device();
         value = atomic_load_explicit(&X, memory_order_acquire);
     }
-    printf("y : %d \t x : %d\n",tempy,value);
+    printf("tempy : %d \t value : %d\n",tempy,value);
 }
 
 void *kernel1( void *arg) {
