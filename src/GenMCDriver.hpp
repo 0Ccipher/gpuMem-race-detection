@@ -33,6 +33,8 @@
 #include <memory>
 #include <random>
 #include <unordered_set>
+#include <unordered_map>
+
 
 namespace llvm {
 	struct ExecutionContext;
@@ -195,6 +197,13 @@ public:
 	ThreadPool *getThreadPool() const { return pool; }
 	void setThreadPool(ThreadPool *tp) { pool = tp; }
 
+	void setGroupSize(int s){
+		groupsize = s;
+	}
+	int getGroupSize(){
+		return groupsize;
+	}
+
 	/*** Instruction-related actions ***/
 
 	/* Returns the value this load reads */
@@ -300,6 +309,9 @@ public:
 	 * execution is invalid), or aborts the exploration */
 	void visitError(Event pos, Status r, const std::string &err = std::string(),
 			Event confEvent = Event::getInitializer());
+
+	/* Handle SyncThreads*/
+	void visitSyncThread();
 
 	virtual ~GenMCDriver();
 
@@ -759,7 +771,7 @@ private:
 	void updateScope(int s){
 		scope = s;
 	}
-	
+
 #ifdef ENABLE_GENMC_DEBUG
 	void checkForDuplicateRevisit(const ReadLabel *rLab, const WriteLabel *sLab);
 #endif
@@ -810,6 +822,9 @@ private:
 
 	/*Current scope value 1=device , 2=work-group*/
 	short int scope = -1;
+	int groupsize = -1;
+
+	std::unordered_map<int,int> activeBarriers;
 
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream &s,
 					     const Status &r);

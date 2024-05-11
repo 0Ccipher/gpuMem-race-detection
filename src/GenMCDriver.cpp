@@ -1794,6 +1794,36 @@ void GenMCDriver::filterOptimizeRfs(const ReadLabel *lab, std::vector<Event> &st
 	if (lab->getAnnot())
 		filterValuesFromAnnotSAVER(lab, stores);
 }
+void GenMCDriver::visitSyncThread(){
+	auto &g = getGraph();
+	auto *EE = getEE();
+	auto &thr = EE->getCurThr();
+	int thisGroup = thr.group_id;
+	int count = 0;
+	/*Check if all work-items of this group reached barrier*/
+	if(activeBarriers[thisGroup] == (getGroupSize() - 1)){
+		activeBarriers.erase(thisGroup);
+		/*Unblock all the work-items of this group*/
+		for(int i=0 ; i < g.getNumThreads() ; i++){
+			auto &th = EE->getThrById(i);
+			if(th.group_id == thisGroup){
+				th.unblock();
+			}
+		}
+		return;
+	}
+	/*Not all work-items reached the syncthread*/
+	if(activeBarriers.count(thisGroup) == 0){
+		activeBarriers[thisGroup] = 1;
+	}
+	else{
+		activeBarriers[thisGroup] += 1;
+	}
+	/* Block the thread*/
+	thr.block(BlockageType::SyncThread);
+	WARN("Blocked the thread (" + to_string(thr.parentId) + "," + to_string(thr.id) + " with Group: " + to_string(thr.group_id)+ "\n");
+}
+
 
 SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *deps)
 {

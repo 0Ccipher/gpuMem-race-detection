@@ -204,6 +204,10 @@ protected:
 	Thread(llvm::Function *F, SVal arg, int id, int pid, const llvm::ExecutionContext &SF)
 		: id(id), parentId(pid), threadFun(F), threadArg(arg),
 		  initSF(SF), globalInstructions(0), blocked(BlockageType::NotBlocked), rng(seed) {}
+
+  Thread(llvm::Function *F, SVal arg, int id, int pid, const llvm::ExecutionContext &SF, int kernel, int group)
+		: id(id), parentId(pid), threadFun(F), threadArg(arg), kernel_id(kernel), group_id(group),
+		  initSF(SF), globalInstructions(0), blocked(BlockageType::NotBlocked), rng(seed) {}
 };
 
 llvm::raw_ostream& operator<<(llvm::raw_ostream &s, const Thread &thr);
@@ -781,6 +785,9 @@ private:  // Helper functions
   DECLARE_CUSTOM_OPCODE(thread_local_id);
   DECLARE_CUSTOM_OPCODE(thread_group_id);
   DECLARE_CUSTOM_OPCODE(thread_kernel_id);
+  DECLARE_CUSTOM_OPCODE(syncthread);
+  DECLARE_CUSTOM_OPCODE(groupsize);
+  
 
   void callInternalFunction(Function *F, const std::vector<GenericValue> &ArgVals,
 			    const std::unique_ptr<EventDeps> &deps);

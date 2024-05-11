@@ -66,6 +66,8 @@ bool DeclareInternalsPass::runOnModule(Module &M)
 	modified |= declareInternal(M, "__VERIFIER_thread_local_id", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_thread_group_id", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_thread_kernel_id", Type::getVoidTy(M.getContext()), {});
+	modified |= declareInternal(M, "__VERIFIER_syncthread", Type::getVoidTy(M.getContext()), {});
+	modified |= declareInternal(M, "__VERIFIER_groupsize", Type::getVoidTy(M.getContext()), {});
 	return modified;
 }
 

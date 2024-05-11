@@ -6,8 +6,8 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#define WORK_ITEMS_PER_GROUP 2
-#define WORK_ITEMS_PER_KERNEL 2
+#define WORK_ITEMS_PER_GROUP 3
+#define WORK_ITEMS_PER_KERNEL 3
 #define GLOBAL_WORK_OFFSET 0
 struct ThreadData;
 
@@ -40,7 +40,7 @@ void thr1(){
     atomic_thread_fence(memory_order_release);
 
     __VERIFIER_memory_scope_device();
-    atomic_store_explicit(&Y, 42, memory_order_relaxed);
+    atomic_fetch_add_explicit(&Y, 42, memory_order_relaxed);
 }
 
 void thr2(){

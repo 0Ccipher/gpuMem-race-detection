@@ -2891,6 +2891,21 @@ void Interpreter::callthread_kernel_id(Function *F, const std::vector<GenericVal
 	// WARN(""+F->getName()+" - "+firstArg->getName()+" id : "+std::to_string(thr_id)+"\n");
 	getCurThr().kernel_id = thr_id;
 }
+void Interpreter::callsyncthread(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	WARN(" Interpreted SyncThread \n");
+	driver->visitSyncThread();
+}
+void Interpreter::callgroupsize(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	Argument *firstArg = &*F->arg_begin();
+	GenericValue firstArgValue = ArgVals[0];
+	int s = ArgVals[0].IntVal.getLimitedValue();
+	WARN("GroupSize"+std::to_string(s)+"\n");
+	driver->setGroupSize(s);
+}
 void Interpreter::callSpinStart(Function *F, const std::vector<GenericValue> &ArgVals,
 				const std::unique_ptr<EventDeps> &specialDeps)
 {
@@ -4603,6 +4618,8 @@ void Interpreter::callInternalFunction(Function *F, const std::vector<GenericVal
 		CALL_INTERNAL_FUNCTION(thread_local_id);
 		CALL_INTERNAL_FUNCTION(thread_group_id);
 		CALL_INTERNAL_FUNCTION(thread_kernel_id);
+		CALL_INTERNAL_FUNCTION(syncthread);
+		CALL_INTERNAL_FUNCTION(groupsize);
 		
 	default:
 		BUG();

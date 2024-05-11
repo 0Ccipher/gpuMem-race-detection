@@ -124,8 +124,8 @@ View RC11Driver::calcWriteMsgViewScoped(const WriteLabel *lab, Event acq, int sc
 {
 	const auto &g = getGraph();
 	auto * acqLab = g.getEventLabel(acq);
-	/* Should only be called with plain writes */
-	BUG_ON(llvm::isa<FaiWriteLabel>(lab) || llvm::isa<CasWriteLabel>(lab));
+	// /* Should only be called with plain writes */
+	// BUG_ON(llvm::isa<FaiWriteLabel>(lab) || llvm::isa<CasWriteLabel>(lab));
 
 	if (lab->isAtLeastRelease())
 	if ((lab->getScope()==2 && acqLab->getScope()==2 && lab->getKernelId() == acqLab->getKernelId() 
@@ -151,8 +151,18 @@ void RC11Driver::calcRMWWriteMsgView(WriteLabel *lab)
 	BUG_ON(!llvm::isa<ReadLabel>(pLab));
 
 	const ReadLabel *rLab = static_cast<const ReadLabel *>(pLab);
+	// if (auto *wLab = llvm::dyn_cast<WriteLabel>(g.getEventLabel(rLab->getRf())))
+	// 	msg.update(wLab->getMsgView());
 	if (auto *wLab = llvm::dyn_cast<WriteLabel>(g.getEventLabel(rLab->getRf())))
-		msg.update(wLab->getMsgView());
+		if((lab->getScope()==2 && wLab->getScope()==2 && lab->getKernelId() == wLab->getKernelId() 
+			&& lab->getGroupId() == wLab->getGroupId()) 
+			|| (lab->getScope()==1 && wLab->getScope()==1) || (lab->getScope() == -1)){
+			msg.update(wLab->getMsgView());
+		}
+		else{
+			msg.update(calcWriteMsgViewScoped(wLab , lab->getPos(),lab->getScope(),
+						lab->getGroupId(), lab->getKernelId()));;
+		}
 
 	if (rLab->isAtLeastRelease())
 		msg.update(lab->getHbView());

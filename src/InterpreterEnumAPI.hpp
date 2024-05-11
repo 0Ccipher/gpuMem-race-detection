@@ -42,6 +42,7 @@ enum class BlockageType {
 	Cons,
 	Error,
 	User,
+	SyncThread,
 };
 
 /* Pers: Journaling mount options */
@@ -129,6 +130,8 @@ enum class InternalFunctions {
 	FN_thread_local_id,
 	FN_thread_group_id,
 	FN_thread_kernel_id,
+	FN_syncthread,
+	FN_groupsize,
 };
 
 extern const std::unordered_map<std::string, InternalFunctions> internalFunNames;

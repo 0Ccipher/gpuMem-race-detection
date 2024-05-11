@@ -85,6 +85,8 @@ const std::unordered_map<std::string, InternalFunctions> internalFunNames = {
 	{"__VERIFIER_thread_local_id", InternalFunctions::FN_thread_local_id},
 	{"__VERIFIER_thread_group_id", InternalFunctions::FN_thread_group_id},
 	{"__VERIFIER_thread_kernel_id", InternalFunctions::FN_thread_kernel_id},
+	{"__VERIFIER_syncthread", InternalFunctions::FN_syncthread},
+	{"__VERIFIER_groupsize", InternalFunctions::FN_groupsize},
 
 };
 
