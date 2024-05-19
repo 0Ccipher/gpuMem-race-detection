@@ -46,3 +46,7 @@ missing
 src/genmc
 stamp-h1
 include/Makefile
+Makefile
+*.json
+.vscode/launch.json
+.vscode/settings.json 
