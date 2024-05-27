@@ -19,6 +19,8 @@ void __VERIFIER_thread_local_id(int a)          ;
 void __VERIFIER_thread_group_id(int a)          ;
 void __VERIFIER_thread_kernel_id(int a)         ;
 void __VERIFIER_syncthread()                    ;
+void __VERIFIER_groupsize(int localWorkSize)    ;
+
 atomic_int X = 0;
 atomic_int Y = 0;
 // __global int X = 0;
@@ -66,14 +68,16 @@ void *kernel1( void *arg) {
     __VERIFIER_thread_local_id(local_id);
     __VERIFIER_thread_group_id(group_id);
     __VERIFIER_thread_kernel_id(kernel_id);
-    printf("group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
+    // printf("group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
     if(local_id == 0)
         thr1(); // executed by thread1
     else
         thr2(); // executed by thread2
     
     __VERIFIER_syncthread();
-    printf(" After syncthread group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
+    printf(" 1 After syncthread group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
+    __VERIFIER_syncthread();
+    printf(" 2 After syncthread group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
   
     return NULL;
 }

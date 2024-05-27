@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#define WORK_ITEMS_PER_GROUP 1
+#define WORK_ITEMS_PER_GROUP 2
 #define WORK_ITEMS_PER_KERNEL 2
 #define GLOBAL_WORK_OFFSET 0
 struct ThreadData;
@@ -18,6 +18,7 @@ void __VERIFIER_thread_global_id(int a)         ;
 void __VERIFIER_thread_local_id(int a)          ;
 void __VERIFIER_thread_group_id(int a)          ;
 void __VERIFIER_thread_kernel_id(int a)         ;
+void __VERIFIER_syncthread()                    ;
 atomic_int X = 0;
 atomic_int Y = 0;
 // __global int X = 0;
@@ -31,29 +32,28 @@ struct ThreadData
     int kernel_id;
 };
 
-void wg1(){
+void thr1(){
     __VERIFIER_memory_scope_device();
     atomic_store_explicit(&X, 42, memory_order_relaxed);
 
      __VERIFIER_memory_scope_work_group();
-    atomic_thread_fence(memory_order_release);
+    atomic_thread_fence(memory_order_seq_cst);
 
     __VERIFIER_memory_scope_device();
     atomic_store_explicit(&Y, 42, memory_order_relaxed);
 }
 
-void wg2(){
+void thr2(){
     int value = -1;
     __VERIFIER_memory_scope_device();
     int tempy = atomic_load_explicit(&Y, memory_order_relaxed);
     
     __VERIFIER_memory_scope_work_group();
-    atomic_thread_fence(memory_order_acquire);
+    atomic_thread_fence(memory_order_seq_cst);
 
     __VERIFIER_memory_scope_device();
     value = atomic_load_explicit(&X, memory_order_relaxed);
     
-    printf("y : %d \t x : %d\n",tempy,value);
 }
 
 void *kernel1( void *arg) {
@@ -66,17 +66,15 @@ void *kernel1( void *arg) {
     __VERIFIER_thread_local_id(local_id);
     __VERIFIER_thread_group_id(group_id);
     __VERIFIER_thread_kernel_id(kernel_id);
-    printf("group-id : %d , local-id : %d \n",group_id , local_id);
-    if(group_id == 0)
-        wg1(); // executed by thread1
+    printf("group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
+    if(local_id == 0)
+        thr1(); // executed by thread1
     else
-        wg2(); // executed by thread2
+        thr2(); // executed by thread2
     
     __VERIFIER_syncthread();
-    printf(" 1 After syncthread group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
-    __VERIFIER_syncthread();
-    printf(" 2 After syncthread group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
-
+    printf(" After syncthread group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
+  
     return NULL;
 }
 

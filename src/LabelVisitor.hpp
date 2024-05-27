@@ -106,6 +106,7 @@ public:
 			VISIT_LABEL(DskOpen);
 			VISIT_LABEL(RCULock, LKMM);
 			VISIT_LABEL(RCUUnlock, LKMM);
+			VISIT_LABEL(BarrierSync);
 		default:
 			BUG();
 		}
@@ -189,6 +190,8 @@ public:
 	 */
 	void visitMemAccessLabel(const MemAccessLabel &lab) { return DELEGATE_LABEL(EventLabel); }
 
+	void visitBarrierSyncLabel(const BarrierSyncLabel &lab) { return DELEGATE_LABEL(EventLabel); }
+
 	/*
 	 * If no one else could handle this particular instruction,
 	 * call the generic handler
@@ -268,6 +271,11 @@ public:
 		out << " (" << fmtFun(lab.getAddr()) << ", ";
 		printVal(lab.getVal(), lab.getType());
 		out << ")";
+	}
+
+	void visitBarrierSyncLabel(const BarrierSyncLabel &lab) { 
+		DELEGATE_LABEL(EventLabel); 
+		out << " (" << lab.getId() << ")";
 	}
 
 	void visitFenceLabel(const FenceLabel &lab) {

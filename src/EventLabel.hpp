@@ -125,6 +125,7 @@ public:
 		EL_DskOpen,
 		EL_RCULockLKMM,
 		EL_RCUUnlockLKMM,
+		EL_BarrierSync,
 	};
 
 protected:
@@ -378,6 +379,40 @@ public:
 
 private:
 	BlockageType type;
+};
+
+/*******************************************************************************
+ **                            BlockLabel Class
+ ******************************************************************************/
+
+/* A label that represents a blockage event */
+class BarrierSyncLabel : public EventLabel {
+
+public:
+	BarrierSyncLabel(unsigned int st, Event pos, BlockageType t)
+		: EventLabel(EL_BarrierSync, st, llvm::AtomicOrdering::NotAtomic, pos), type(t) {}
+	BarrierSyncLabel(Event pos, BlockageType t)
+		: EventLabel(EL_BarrierSync, llvm::AtomicOrdering::NotAtomic, pos), type(t) {}
+
+	BlockageType getType() const { return type; }
+	int getId() const {return id;}
+	void setId(int n) {id = n;}
+
+	template<typename... Ts>
+	static std::unique_ptr<BarrierSyncLabel> create(Ts&&... params) {
+		return std::make_unique<BarrierSyncLabel>(std::forward<Ts>(params)...);
+	}
+
+	std::unique_ptr<EventLabel> clone() const override {
+		return std::make_unique<BarrierSyncLabel>(*this);
+	}
+
+	static bool classof(const EventLabel *lab) { return classofKind(lab->getKind()); }
+	static bool classofKind(EventLabelKind k) { return k == EL_BarrierSync; }
+
+private:
+	BlockageType type;
+	int id=-1;
 };
 
 

@@ -2895,7 +2895,7 @@ void Interpreter::callsyncthread(Function *F, const std::vector<GenericValue> &A
 				const std::unique_ptr<EventDeps> &specialDeps)
 {
 	WARN(" Interpreted SyncThread \n");
-	driver->visitSyncThread();
+	driver->visitBarrierSync(BarrierSyncLabel::create(nextPos(),BlockageType::SyncThread));
 }
 void Interpreter::callgroupsize(Function *F, const std::vector<GenericValue> &ArgVals,
 				const std::unique_ptr<EventDeps> &specialDeps)

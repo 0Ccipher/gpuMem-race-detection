@@ -167,6 +167,7 @@ public:
   int local_id = -1;
   int group_id = -1;
   int kernel_id = -1;
+  int barriedID;
 	llvm::Function *threadFun;
 	SVal threadArg;
 	std::vector<llvm::ExecutionContext> ECStack;
@@ -198,16 +199,16 @@ protected:
 	friend class Interpreter;
 
 	Thread(llvm::Function *F, int id)
-		: id(id), parentId(-1), threadFun(F), initSF(), globalInstructions(0),
+		: id(id), parentId(-1), threadFun(F), initSF(), globalInstructions(0), barriedID(0),
 		  blocked(BlockageType::NotBlocked), rng(seed) {}
 
 	Thread(llvm::Function *F, SVal arg, int id, int pid, const llvm::ExecutionContext &SF)
 		: id(id), parentId(pid), threadFun(F), threadArg(arg),
-		  initSF(SF), globalInstructions(0), blocked(BlockageType::NotBlocked), rng(seed) {}
+		  initSF(SF), globalInstructions(0), barriedID(0), blocked(BlockageType::NotBlocked), rng(seed) {}
 
   Thread(llvm::Function *F, SVal arg, int id, int pid, const llvm::ExecutionContext &SF, int kernel, int group)
 		: id(id), parentId(pid), threadFun(F), threadArg(arg), kernel_id(kernel), group_id(group),
-		  initSF(SF), globalInstructions(0), blocked(BlockageType::NotBlocked), rng(seed) {}
+		  initSF(SF), globalInstructions(0), barriedID(0), blocked(BlockageType::NotBlocked), rng(seed) {}
 };
 
 llvm::raw_ostream& operator<<(llvm::raw_ostream &s, const Thread &thr);
@@ -436,6 +437,10 @@ public:
   Event incPos() {
 	  auto &thr = getCurThr();
 	  return Event(thr.id, ++thr.globalInstructions);
+  };
+  void incBarrierId() {
+	  auto &thr = getCurThr();
+	  ++thr.barriedID;
   };
   Event decPos() {
 	  auto &thr = getCurThr();

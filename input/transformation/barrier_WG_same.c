@@ -5,8 +5,9 @@
 #include <stdatomic.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <limits.h>
 
-#define WORK_ITEMS_PER_GROUP 1
+#define WORK_ITEMS_PER_GROUP 2
 #define WORK_ITEMS_PER_KERNEL 2
 #define GLOBAL_WORK_OFFSET 0
 struct ThreadData;
@@ -18,8 +19,13 @@ void __VERIFIER_thread_global_id(int a)         ;
 void __VERIFIER_thread_local_id(int a)          ;
 void __VERIFIER_thread_group_id(int a)          ;
 void __VERIFIER_thread_kernel_id(int a)         ;
+void __VERIFIER_syncthread()                    ;
+void __VERIFIER_groupsize(int localWorkSize)    ;
+
 atomic_int X = 0;
 atomic_int Y = 0;
+atomic_int Z = 0;
+
 // __global int X = 0;
 // __global ient Y = 0;
 
@@ -31,18 +37,31 @@ struct ThreadData
     int kernel_id;
 };
 
-void wg1(){
+pthread_barrier_t barr;
+
+void thr1(){
     __VERIFIER_memory_scope_device();
     atomic_store_explicit(&X, 42, memory_order_relaxed);
 
-     __VERIFIER_memory_scope_work_group();
+    __VERIFIER_memory_scope_work_group();
     atomic_thread_fence(memory_order_release);
 
     __VERIFIER_memory_scope_device();
     atomic_store_explicit(&Y, 42, memory_order_relaxed);
+
+    __VERIFIER_memory_scope_work_group();
+    atomic_load_explicit(&Z, memory_order_acquire);
+
+    // /* Synchronize */
+    //     __VERIFIER_memory_scope_work_group();
+	// 	int rc = pthread_barrier_wait(&barr);
+	// 	if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+	// 		printf("Could not wait on barrier\n");
+	// 		pthread_exit(NULL);
+	// 	}
 }
 
-void wg2(){
+void thr2(){
     int value = -1;
     __VERIFIER_memory_scope_device();
     int tempy = atomic_load_explicit(&Y, memory_order_relaxed);
@@ -51,9 +70,21 @@ void wg2(){
     atomic_thread_fence(memory_order_acquire);
 
     __VERIFIER_memory_scope_device();
-    value = atomic_load_explicit(&X, memory_order_relaxed);
+    value = atomic_load_explicit(&X, memory_order_acquire);
     
-    printf("y : %d \t x : %d\n",tempy,value);
+    // /* Synchronize */
+    //     __VERIFIER_memory_scope_work_group();
+	// 	int rc = pthread_barrier_wait(&barr);
+	// 	if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+	// 		printf("Could not wait on barrier\n");
+	// 		pthread_exit(NULL);
+	// 	}
+
+    __VERIFIER_memory_scope_work_group();
+    atomic_store_explicit(&Z, 42, memory_order_release);
+
+
+
 }
 
 void *kernel1( void *arg) {
@@ -66,17 +97,12 @@ void *kernel1( void *arg) {
     __VERIFIER_thread_local_id(local_id);
     __VERIFIER_thread_group_id(group_id);
     __VERIFIER_thread_kernel_id(kernel_id);
-    printf("group-id : %d , local-id : %d \n",group_id , local_id);
-    if(group_id == 0)
-        wg1(); // executed by thread1
+    // printf("group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
+    if(local_id == 0)
+        thr1(); // executed by thread1
     else
-        wg2(); // executed by thread2
+        thr2(); // executed by thread2
     
-    __VERIFIER_syncthread();
-    printf(" 1 After syncthread group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
-    __VERIFIER_syncthread();
-    printf(" 2 After syncthread group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
-
     return NULL;
 }
 
@@ -88,6 +114,12 @@ int main(int argc, char **argv){
     int totalThreads = kernels * globalWorkSize;
 
     __VERIFIER_groupsize(localWorkSize);
+
+    /* Barrier initialization */
+	if (pthread_barrier_init(&barr, NULL, globalWorkSize)) {
+		printf("Could not create a barrier\n");
+		return -1;
+	}
 
   	pthread_t workItems[totalThreads];
     struct ThreadData workItemInfo[totalThreads];

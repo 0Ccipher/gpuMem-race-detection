@@ -1396,7 +1396,8 @@ bool GenMCDriver::checkAtomicity(const WriteLabel *wLab)
 }
 
 bool GenMCDriver::ensureConsistentRf(const ReadLabel *rLab, std::vector<Event> &rfs)
-{
+{	
+	WARN("RF Size : "+to_string(rfs.size())+"\n");
 	bool found = false;
 	while (!found) {
 		found = true;
@@ -1794,14 +1795,20 @@ void GenMCDriver::filterOptimizeRfs(const ReadLabel *lab, std::vector<Event> &st
 	if (lab->getAnnot())
 		filterValuesFromAnnotSAVER(lab, stores);
 }
-void GenMCDriver::visitSyncThread(){
+void GenMCDriver::visitBarrierSync(std::unique_ptr<BarrierSyncLabel> lab){
 	auto &g = getGraph();
 	auto *EE = getEE();
 	auto &thr = EE->getCurThr();
 	int thisGroup = thr.group_id;
 	int count = 0;
 	/*Check if all work-items of this group reached barrier*/
-	if(activeBarriers[thisGroup] == (getGroupSize() - 1)){
+	if(activeBarriers.count(thisGroup) == 0){
+		activeBarriers[thisGroup] = 1;
+	}
+	else{
+		activeBarriers[thisGroup] += 1;
+	}
+	if(activeBarriers[thisGroup] == getGroupSize()){
 		activeBarriers.erase(thisGroup);
 		/*Unblock all the work-items of this group*/
 		for(int i=0 ; i < g.getNumThreads() ; i++){
@@ -1810,18 +1817,24 @@ void GenMCDriver::visitSyncThread(){
 				th.unblock();
 			}
 		}
-		return;
-	}
-	/*Not all work-items reached the syncthread*/
-	if(activeBarriers.count(thisGroup) == 0){
-		activeBarriers[thisGroup] = 1;
 	}
 	else{
-		activeBarriers[thisGroup] += 1;
+		thr.block(lab->getType());
+		WARN("Blocked the thread (" + to_string(thr.parentId) + "," + to_string(thr.id) + " with Group: " + to_string(thr.group_id)+ "\n");
 	}
-	/* Block the thread*/
-	thr.block(BlockageType::SyncThread);
-	WARN("Blocked the thread (" + to_string(thr.parentId) + "," + to_string(thr.id) + " with Group: " + to_string(thr.group_id)+ "\n");
+	lab->setId(thr.barriedID);
+	EE->incBarrierId();
+	if(isExecutionDrivenByGraph()){
+		return;
+	}
+	lab->setGroupId(EE->getCurThr().group_id);
+	lab->setKernelId(EE->getCurThr().kernel_id);
+	auto *tLab = g.getEventLabel(Event(lab->getPos().thread, 0));
+	auto *tsLab = llvm::dyn_cast<ThreadStartLabel>(tLab);
+	tsLab->setGroupId(EE->getCurThr().group_id);
+	tsLab->setKernelId(EE->getCurThr().kernel_id);
+	updateLabelViews(lab.get(), nullptr);
+	g.addOtherLabelToGraph(std::move(lab));
 }
 
 

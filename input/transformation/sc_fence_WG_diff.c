@@ -36,7 +36,7 @@ void wg1(){
     atomic_store_explicit(&X, 42, memory_order_relaxed);
 
      __VERIFIER_memory_scope_work_group();
-    atomic_thread_fence(memory_order_release);
+    atomic_thread_fence(memory_order_seq_cst);
 
     __VERIFIER_memory_scope_device();
     atomic_store_explicit(&Y, 42, memory_order_relaxed);
@@ -48,7 +48,7 @@ void wg2(){
     int tempy = atomic_load_explicit(&Y, memory_order_relaxed);
     
     __VERIFIER_memory_scope_work_group();
-    atomic_thread_fence(memory_order_acquire);
+    atomic_thread_fence(memory_order_seq_cst);
 
     __VERIFIER_memory_scope_device();
     value = atomic_load_explicit(&X, memory_order_relaxed);
@@ -72,11 +72,7 @@ void *kernel1( void *arg) {
     else
         wg2(); // executed by thread2
     
-    __VERIFIER_syncthread();
-    printf(" 1 After syncthread group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
-    __VERIFIER_syncthread();
-    printf(" 2 After syncthread group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
-
+  
     return NULL;
 }
 
@@ -86,8 +82,6 @@ int main(int argc, char **argv){
     int localWorkSize = WORK_ITEMS_PER_GROUP;
     int kernels = 1;
     int totalThreads = kernels * globalWorkSize;
-
-    __VERIFIER_groupsize(localWorkSize);
 
   	pthread_t workItems[totalThreads];
     struct ThreadData workItemInfo[totalThreads];

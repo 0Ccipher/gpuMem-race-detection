@@ -327,6 +327,9 @@ void RC11Driver::updateLabelViews(EventLabel *lab, const EventDeps *deps) /* dep
 	case EventLabel::EL_RCUSyncLKMM:
 		ERROR("RCU primitives can only be used with -lkmm!\n");
 		break;
+	case EventLabel::EL_BarrierSync:
+		calcBasicViews(lab);
+		break;
 	default:
 		BUG();
 	}

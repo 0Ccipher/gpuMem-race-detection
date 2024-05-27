@@ -311,7 +311,7 @@ public:
 			Event confEvent = Event::getInitializer());
 
 	/* Handle SyncThreads*/
-	void visitSyncThread();
+	void visitBarrierSync(std::unique_ptr<BarrierSyncLabel> lab);
 
 	virtual ~GenMCDriver();
 

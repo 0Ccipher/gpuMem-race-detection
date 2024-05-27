@@ -926,7 +926,7 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 		auto thrIdx = elems.size();
 		for (auto j = 0u; j < getThreadSize(i); j++) {
 			auto *lab = getEventLabel(Event(i, j));
-			if (!isNonTrivial(lab))
+			if (!isNonTrivial(lab) )//&& !llvm::isa<BarrierSyncLabel>(lab))
 				continue;
 
 			auto labIdx = elems.size();
@@ -961,6 +961,33 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 					}
 				}
 			}
+			// if (auto *bLab = llvm::dyn_cast<BarrierSyncLabel>(lab)){
+			// 	int bid = bLab->getId();
+			// 	int group = bLab->getGroupId();
+			// 	int kernel = bLab->getKernelId();
+			// 	auto prevLabel =  getPreviousNonTrivial(lab->getPos());
+			// 	WARN("*** barrierSync from*** ("+to_string(prevLabel.thread)+","+to_string(prevLabel.index)+"), id: "+to_string(bLab->getId())+" \n");	
+
+			// 	for(auto k=0u ; k < getNumThreads() ; k++){
+			// 		if(k==i) continue;
+			// 		auto *tLab = getEventLabel(Event(k, 0));
+			// 		BUG_ON(!llvm::isa<ThreadStartLabel>(tLab));
+			// 		auto *tsLab = llvm::dyn_cast<ThreadStartLabel>(tLab);
+			// 		if(tsLab->getGroupId() != group || tsLab->getKernelId() != kernel) 
+			// 			continue;
+			// 		for (auto l = 0u; l < getThreadSize(k); l++){
+			// 			auto *newlab = getEventLabel(Event(k, l));
+			// 			if (!llvm::isa<BarrierSyncLabel>(newlab))
+			// 				continue;
+			// 			auto *b2Lab = llvm::dyn_cast<BarrierSyncLabel>(newlab);
+			// 			if(b2Lab->getId() == bid){
+			// 				edges.push_back(std::make_pair(prevLabel, b2Lab->getPos()));
+			// 				WARN("***barrierSync edges to *** ("+to_string(b2Lab->getPos().thread)+","+to_string(b2Lab->getPos().index)+")\n");
+			// 			}
+			// 		}
+			// 	}
+
+			// }
 		}
 	}
 	relation = AdjList<Event, EventHasher>(std::move(elems));
