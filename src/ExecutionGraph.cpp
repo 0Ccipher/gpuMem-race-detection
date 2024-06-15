@@ -110,8 +110,8 @@ Event ExecutionGraph::getLastThreadReleaseAtLoc(Event upperLimit, SAddr addr) co
 
 Event ExecutionGraph::getLastThreadReleaseAtLocScoped(Event upperLimit, SAddr addr , Event acq, int scope, int group , int kernel) const
 {
-	WARN("ACQ  :(" + to_string(acq.thread)+ ","+to_string(acq.index) +")\n");
-	WARN(" scope : "+to_string(scope)+" Group id : " + to_string(group)+
+	WARN("ACQ  :(" + to_string(acq.thread)+ ","+to_string(acq.index) +")\t")+
+	(" scope : "+to_string(scope)+" Group id : " + to_string(group)+
 		" Kernel id : " + to_string(kernel)+"\n");
 	for (int i = upperLimit.index - 1; i > 0; i--) {
 		const EventLabel *lab = getEventLabel(Event(upperLimit.thread, i));
@@ -874,9 +874,67 @@ ExecutionGraph::getRevisitView(const BackwardRevisit &r) const
 	preds->update(getWriteLabel(r.getRev())->getPorfView());
 	if (auto *br = llvm::dyn_cast<BackwardRevisitHELPER>(&r))
 		preds->update(getWriteLabel(br->getMid())->getPorfView());
+	View v = *preds;
+	/*ADjust the barriers - first for steps WG and then for device scope*/
+	for (auto i = 0u; i < getNumThreads(); i++) {
+		for(auto j = v[i]+1 ; j < getThreadSize(i); j++){
+			auto *lab = getEventLabel(Event(i, j));
+			if(!llvm::isa<BIncFaiReadLabel>(lab))
+				continue;
+			for (auto k = 0u; k < getNumThreads(); k++) {
+				for(auto l = 1 ; l <= v[k]; l++) {
+					auto *olab = getEventLabel(Event(k, l));
+					if(!llvm::isa<BIncFaiReadLabel>(lab))
+						/*&&  !llvm::isa<BIncFaiWriteLabel>(lab) &&
+						!llvm::isa<BWaitReadLabel>(lab) )*/
+						continue;
+					/*TODO: Also check the id of the Barrier*/
+					if(isScopeInclusive(lab->getPos() , olab->getPos()) 
+						&& lab->getBarrierId() == olab->getBarrierId())
+						(*preds)[k] = l-1;
+				}
+			}
+		}
+	}
+	v = *preds;
+	/*ADjust the barriers - first for steps WG and then for device scope*/
+	for (auto i = 0u; i < getNumThreads(); i++) {
+		for(auto j = v[i]+1 ; j < getThreadSize(i); j++){
+			auto *lab = getEventLabel(Event(i, j));
+			if(!llvm::isa<BIncFaiReadLabel>(lab))
+				continue;
+			for (auto k = 0u; k < getNumThreads(); k++) {
+				for(auto l = 1 ; l <= v[k]; l++) {
+					auto *olab = getEventLabel(Event(k, l));
+					if(!llvm::isa<BIncFaiReadLabel>(lab))
+						/*&&  !llvm::isa<BIncFaiWriteLabel>(lab) &&
+						!llvm::isa<BWaitReadLabel>(lab) )*/
+						continue;
+					/*TODO: Also check the id of the Barrier*/
+					if(isScopeInclusive(lab->getPos() , olab->getPos()) 
+						&& lab->getBarrierId() == olab->getBarrierId())
+						(*preds)[k] = l-1;
+				}
+			}
+		}
+	}
 	return std::move(preds);
 }
 
+//
+bool ExecutionGraph::isScopeInclusive(const Event i , const Event j) const
+{
+	const EventLabel *labi = getEventLabel(i);
+	const EventLabel *labj = getEventLabel(j);
+	if ((labi->getScope()==2 && labj->getScope()==2 && 
+			labi->getKernelId() == labj->getKernelId() && 
+			labi->getGroupId() == labj->getGroupId()) || 
+		(labi->getScope()==1 && labj->getScope()==1) || 
+		(labi->getScope() == -1 && labj->getScope() == -1)) {
+			return true;
+	}
+	return false;
+}
 const DepView &ExecutionGraph::getPPoRfBefore(Event e) const
 {
 	return getEventLabel(e)->getPPoRfView();
@@ -926,10 +984,13 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 		auto thrIdx = elems.size();
 		for (auto j = 0u; j < getThreadSize(i); j++) {
 			auto *lab = getEventLabel(Event(i, j));
-			if (!isNonTrivial(lab) )//&& !llvm::isa<BarrierSyncLabel>(lab))
-				continue;
+			// if (!isNonTrivial(lab) )
+			// 	continue;
 
 			auto labIdx = elems.size();
+			if(i==2 && j==5) WARN("Elem(2,5) Stamp : "+ to_string(lab->getStamp())+"\n");
+			if(i==2 && j==7) WARN("Elem(2,7) Stamp : "+ to_string(lab->getStamp())+"\n");
+			if(i==1 && j==9) WARN("Elem(1,9) Stamp : "+ to_string(lab->getStamp())+"\n");
 			elems.push_back(Event(i, j));
 
 			if (labIdx == thrIdx) {
@@ -990,6 +1051,7 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 			// }
 		}
 	}
+	WARN(" 1 elems.size"+to_string(elems.size()) + "\t");
 	relation = AdjList<Event, EventHasher>(std::move(elems));
 	for (auto &e : edges)
 		relation.addEdge(e.first, e.second);

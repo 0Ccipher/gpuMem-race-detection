@@ -78,6 +78,10 @@ private:
 
 	void addInitEdges(const std::vector<Event> &fcs,
 			  Calculator::GlobalRelation &matrix) const;
+	void addScopInclEdges(const std::vector<Event> from , 
+			const std::vector<Event> to, 
+			Calculator::GlobalRelation &matrix) const;
+	bool isScopeInclusive(const Event i , const Event j) const;
 	void addSbHbEdges(Calculator::GlobalRelation &matrix) const;
 
 	Calculator::CalculationResult addPscConstraints();

@@ -23,6 +23,8 @@
 
 #include <llvm/ADT/BitVector.h>
 #include <llvm/Support/raw_ostream.h>
+#include "Error.hpp"
+
 
 #include <functional>
 #include <unordered_map>
@@ -57,7 +59,7 @@ public:
 	}
 	AdjList(std::vector<T> &&es) : elems(std::move(es)) {
 		auto size = elems.size();
-
+		WARN(" 2 elems.size"+std::__cxx11::to_string(elems.size()) + " \n");
 		nodeSucc.resize(size);
 		inDegree.resize(size);
 		transC.resize(size);

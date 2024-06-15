@@ -236,8 +236,12 @@ public:
 	const int getGroupId() const { return group_id;};
 	void setKernelId(int gid){ kernel_id = gid;};
 	const int getKernelId() const { return kernel_id;};
+	void setBarrierId(int id){bid = id;};
+	int getBarrierId() const{ return bid;};
 
 private:
+	/*IF it is barrier*/
+	int bid = -1;
 	/*Scope of the event 1=device , 2=work-group */
 	short int scope = -1;
 	/*Work grpup of this event*/

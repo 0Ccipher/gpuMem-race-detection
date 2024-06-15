@@ -59,27 +59,27 @@ void thr1(int group_id){
     // __VERIFIER_memory_scope_work_group();
     // atomic_load_explicit(&w, memory_order_relaxed);
 
-    /* Synchronize */
-        __VERIFIER_memory_scope_work_group();
-		int rc = pthread_barrier_wait(&barr[group_id]);
-		if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-			printf("Could not wait on barrier\n");
-			pthread_exit(NULL);
-		}
+    // /* Synchronize */
+    //     __VERIFIER_memory_scope_work_group();
+	// 	int rc = pthread_barrier_wait(&barr[group_id]);
+	// 	if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+	// 		printf("Could not wait on barrier\n");
+	// 		pthread_exit(NULL);
+	// 	}
 
     __VERIFIER_memory_scope_work_group();
     atomic_load_explicit(&Z, memory_order_acquire);
 
 
-    /* Synchronize */
-    printf(" 1 reached barrier : %d \n",group_id);
-    __VERIFIER_memory_scope_work_group();
-    rc = pthread_barrier_wait(&barr[group_id]);
-    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+    // /* Synchronize */
+    // printf(" 1 reached barrier : %d \n",group_id);
+    // __VERIFIER_memory_scope_work_group();
+    // rc = pthread_barrier_wait(&barr[group_id]);
+    // if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
         
-        printf("Could not wait on barrier\n");
-        pthread_exit(NULL);
-    }
+    //     printf("Could not wait on barrier\n");
+    //     pthread_exit(NULL);
+    // }
     printf("1 After barrier : %d \n",group_id);
     printf("1 End , group : %d \n",group_id);
 }
@@ -97,26 +97,26 @@ void thr2(int group_id){
     // __VERIFIER_memory_scope_device();
     // value = atomic_load_explicit(&X, memory_order_acquire);
     
-    /* Synchronize */
-    printf("2 reached barrier : %d \n",group_id);
-    __VERIFIER_memory_scope_work_group();
-    int rc = pthread_barrier_wait(&barr[group_id]);
-    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-        printf("Could not wait on barrier\n");
-        pthread_exit(NULL);
-    }
-    printf("2 After barrier : %d \n",group_id);
+    // /* Synchronize */
+    // printf("2 reached barrier : %d \n",group_id);
+    // __VERIFIER_memory_scope_work_group();
+    // int rc = pthread_barrier_wait(&barr[group_id]);
+    // if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+    //     printf("Could not wait on barrier\n");
+    //     pthread_exit(NULL);
+    // }
+    // printf("2 After barrier : %d \n",group_id);
     
     // __VERIFIER_memory_scope_work_group();  
     // atomic_store_explicit(&w, 42, memory_order_relaxed);
 
-    /* Synchronize */
-        __VERIFIER_memory_scope_work_group();
-		rc = pthread_barrier_wait(&barr[group_id]);
-		if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-			printf("Could not wait on barrier\n");
-			pthread_exit(NULL);
-		}
+    // /* Synchronize */
+    //     __VERIFIER_memory_scope_work_group();
+	// 	rc = pthread_barrier_wait(&barr[group_id]);
+	// 	if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+	// 		printf("Could not wait on barrier\n");
+	// 		pthread_exit(NULL);
+	// 	}
 
     __VERIFIER_memory_scope_work_group();
     atomic_store_explicit(&Z, 42, memory_order_release);

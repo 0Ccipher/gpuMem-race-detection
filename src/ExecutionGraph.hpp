@@ -427,6 +427,10 @@ public:
 	const View &getHbPoBefore(Event e) const;
 	std::vector<Event> getInitRfsAtLoc(SAddr addr) const;
 
+
+	//
+	bool isScopeInclusive(const Event i , const Event j) const;
+
 	/* Returns true if a is hb-before b */
 	bool isHbBefore(Event a, Event b, CheckConsType t = CheckConsType::fast);
 

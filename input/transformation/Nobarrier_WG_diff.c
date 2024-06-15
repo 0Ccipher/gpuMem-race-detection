@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <limits.h>
 
-#define WORK_ITEMS_PER_GROUP 4
-#define WORK_ITEMS_PER_KERNEL 12
+#define WORK_ITEMS_PER_GROUP 1
+#define WORK_ITEMS_PER_KERNEL 2
 #define GROUPS ((WORK_ITEMS_PER_KERNEL / WORK_ITEMS_PER_GROUP)+1)
 #define GLOBAL_WORK_OFFSET 0
 struct ThreadData;
@@ -42,15 +42,13 @@ struct ThreadData
 pthread_barrier_t barr[GROUPS];
 
 void thr1(int group_id){
-    printf("1 Start , group : %d \n",group_id);
-    // __VERIFIER_memory_scope_device();
-    // atomic_store_explicit(&X, 42, memory_order_relaxed);
+    __VERIFIER_memory_scope_device();
+    atomic_store_explicit(&X, 42, memory_order_relaxed);
 
-    // __VERIFIER_memory_scope_work_group();
-    // atomic_thread_fence(memory_order_seq_cst);
+    __VERIFIER_memory_scope_work_group();
+    atomic_thread_fence(memory_order_seq_cst);
 
     __VERIFIER_memory_scope_device();
-    // int tempy = atomic_load_explicit(&Y, memory_order_relaxed);
     atomic_store_explicit(&Y, 42, memory_order_relaxed);
 
     // __VERIFIER_memory_scope_work_group();
@@ -59,70 +57,61 @@ void thr1(int group_id){
     // __VERIFIER_memory_scope_work_group();
     // atomic_load_explicit(&w, memory_order_relaxed);
 
-    /* Synchronize */
-        __VERIFIER_memory_scope_work_group();
-		int rc = pthread_barrier_wait(&barr[group_id]);
-		if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-			printf("Could not wait on barrier\n");
-			pthread_exit(NULL);
-		}
+    // /* Synchronize */
+    //     __VERIFIER_memory_scope_work_group();
+	// 	int rc = pthread_barrier_wait(&barr[group_id]);
+	// 	if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+	// 		printf("Could not wait on barrier\n");
+	// 		pthread_exit(NULL);
+	// 	}
 
     __VERIFIER_memory_scope_work_group();
     atomic_load_explicit(&Z, memory_order_acquire);
 
-
-    /* Synchronize */
-    printf(" 1 reached barrier : %d \n",group_id);
-    __VERIFIER_memory_scope_work_group();
-    rc = pthread_barrier_wait(&barr[group_id]);
-    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-        
-        printf("Could not wait on barrier\n");
-        pthread_exit(NULL);
-    }
-    printf("1 After barrier : %d \n",group_id);
-    printf("1 End , group : %d \n",group_id);
+    // /* Synchronize */
+    //     __VERIFIER_memory_scope_work_group();
+	// 	rc = pthread_barrier_wait(&barr[group_id]);
+	// 	if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+	// 		printf("Could not wait on barrier\n");
+	// 		pthread_exit(NULL);
+	// 	}
 }
 
 void thr2(int group_id){
-    printf("2 Start , group : %d \n",group_id);
     int value = -1;
     __VERIFIER_memory_scope_device();
-    // atomic_store_explicit(&Y, 42, memory_order_relaxed);
     int tempy = atomic_load_explicit(&Y, memory_order_relaxed);
     
-    // __VERIFIER_memory_scope_work_group();
-    // atomic_thread_fence(memory_order_seq_cst);
-
-    // __VERIFIER_memory_scope_device();
-    // value = atomic_load_explicit(&X, memory_order_acquire);
-    
-    /* Synchronize */
-    printf("2 reached barrier : %d \n",group_id);
     __VERIFIER_memory_scope_work_group();
-    int rc = pthread_barrier_wait(&barr[group_id]);
-    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-        printf("Could not wait on barrier\n");
-        pthread_exit(NULL);
-    }
-    printf("2 After barrier : %d \n",group_id);
+    atomic_thread_fence(memory_order_seq_cst);
+
+    __VERIFIER_memory_scope_device();
+    value = atomic_load_explicit(&X, memory_order_acquire);
     
-    // __VERIFIER_memory_scope_work_group();  
+    // /* Synchronize */
+    //     __VERIFIER_memory_scope_work_group();
+	// 	int rc = pthread_barrier_wait(&barr[group_id]);
+	// 	if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+	// 		printf("Could not wait on barrier\n");
+	// 		pthread_exit(NULL);
+	// 	}
+    
+    // __VERIFIER_memory_scope_work_group();
     // atomic_store_explicit(&w, 42, memory_order_relaxed);
 
-    /* Synchronize */
-        __VERIFIER_memory_scope_work_group();
-		rc = pthread_barrier_wait(&barr[group_id]);
-		if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-			printf("Could not wait on barrier\n");
-			pthread_exit(NULL);
-		}
+    // /* Synchronize */
+    //     __VERIFIER_memory_scope_work_group();
+	// 	rc = pthread_barrier_wait(&barr[group_id]);
+	// 	if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+	// 		printf("Could not wait on barrier\n");
+	// 		pthread_exit(NULL);
+	// 	}
 
     __VERIFIER_memory_scope_work_group();
     atomic_store_explicit(&Z, 42, memory_order_release);
 
-     printf("2 End , group : %d \n",group_id);
-    
+
+
 }
 
 void *kernel1( void *arg) {
@@ -136,7 +125,7 @@ void *kernel1( void *arg) {
     __VERIFIER_thread_group_id(group_id);
     __VERIFIER_thread_kernel_id(kernel_id);
     // printf("group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
-    if(local_id == 0)
+    if(group_id == 0)
         thr1(group_id); // executed by thread1
     else
         thr2(group_id); // executed by thread2
@@ -153,6 +142,12 @@ int main(int argc, char **argv){
 
     __VERIFIER_groupsize(localWorkSize);
 
+    // /* Barrier initialization */
+	// if (pthread_barrier_init(&barr, NULL, globalWorkSize)) {
+	// 	printf("Could not create a barrier\n");
+	// 	return -1;
+	// }
+
   	pthread_t workItems[totalThreads];
     struct ThreadData workItemInfo[totalThreads];
 
@@ -161,7 +156,6 @@ int main(int argc, char **argv){
     if( left != 0) groups = groups + 1;
 
     //kernel1
-    printf("groups : %d \n",groups);
     int tcount = 0;
     for(int i = 0 ; i < groups-1; i++){
         /* Barrier initialization per Group*/
@@ -169,7 +163,6 @@ int main(int argc, char **argv){
             printf("Could not create a barrier\n");
             return -1;
         }
-        printf("Created barrier : %d \n",i);
         for(int j = 0 ; j < localWorkSize ; j++){
             workItemInfo[tcount].local_id = j, workItemInfo[tcount].group_id = i, 
                 workItemInfo[tcount].global_id = tcount+GLOBAL_WORK_OFFSET , workItemInfo[tcount].kernel_id = 0;
@@ -184,7 +177,6 @@ int main(int argc, char **argv){
         printf("Could not create a barrier\n");
         return -1;
     }
-    printf("Created barrier : %d \n",(groups-1));
     for(int j = 0 ; j < left ; j++){
         workItemInfo[tcount].local_id = j, workItemInfo[tcount].group_id = groups-1, 
             workItemInfo[tcount].global_id = tcount + GLOBAL_WORK_OFFSET, workItemInfo[tcount].kernel_id = 0;

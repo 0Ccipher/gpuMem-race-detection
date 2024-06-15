@@ -161,8 +161,10 @@ void PSCCalculator::addRbEdges(const std::vector<Event> &fcs,
 		auto preds = calcSCPreds(fcs, e);
 		auto fencePreds = calcSCFencesPreds(fcs, e);
 
-		matrix.addEdgesFromTo(preds, moAfter);        /* Base/fence: Adds rb-edges */
-		matrix.addEdgesFromTo(fencePreds, moRfAfter); /* Fence: Adds (rb;rf)-edges */
+		// matrix.addEdgesFromTo(preds, moAfter);        /* Base/fence: Adds rb-edges */
+		addScopInclEdges(preds, moAfter, matrix);
+		// matrix.addEdgesFromTo(fencePreds, moRfAfter); /* Fence: Adds (rb;rf)-edges */
+		addScopInclEdges(fencePreds, moRfAfter, matrix);
 	}
 	return;
 }
@@ -178,9 +180,12 @@ void PSCCalculator::addMoRfEdges(const std::vector<Event> &fcs,
 	auto fencePreds = calcSCFencesPreds(fcs, ev);
 	auto rfs = calcRfSCSuccs(fcs, ev);
 
-	matrix.addEdgesFromTo(preds, moAfter);        /* Base/fence:  Adds mo-edges */
-	matrix.addEdgesFromTo(preds, rfs);            /* Base/fence:  Adds rf-edges (hb_loc) */
-	matrix.addEdgesFromTo(fencePreds, moRfAfter); /* Fence:       Adds (mo;rf)-edges */
+	// matrix.addEdgesFromTo(preds, moAfter);        /* Base/fence:  Adds mo-edges */
+	addScopInclEdges(preds, moAfter, matrix);
+	// matrix.addEdgesFromTo(preds, rfs);            /* Base/fence:  Adds rf-edges (hb_loc) */
+	addScopInclEdges(preds, rfs, matrix);
+	// matrix.addEdgesFromTo(fencePreds, moRfAfter); /* Fence:       Adds (mo;rf)-edges */
+	addScopInclEdges(fencePreds, moRfAfter, matrix);
 	return;
 }
 
@@ -247,7 +252,8 @@ void PSCCalculator::addSbHbEdges(Calculator::GlobalRelation &matrix) const
 			/* PSC_base/PSC_fence: Adds sb-edges*/
 			if (eiLab->getThread() == ejLab->getThread()) {
 				if (eiLab->getIndex() < ejLab->getIndex())
-					matrix.addEdge(i, j);
+					if(isScopeInclusive(eiLab->getPos() , ejLab->getPos())) //scope-incl
+						matrix.addEdge(i, j);
 				continue;
 			}
 
@@ -275,12 +281,43 @@ void PSCCalculator::addSbHbEdges(Calculator::GlobalRelation &matrix) const
 				    llvm::dyn_cast<MemAccessLabel>(eiNextLab)) {
 					if (eiMLab->getAddr() != eiNextMLab->getAddr() &&
 					    hbRelation(eiNextMLab->getPos(), ejPrevMLab->getPos()))
-						matrix.addEdge(i, j);
+						if(isScopeInclusive(eiLab->getPos() , ejLab->getPos())) //scope-incl
+							matrix.addEdge(i, j);
 				}
 			}
 		}
 	}
 	return;
+}
+
+//
+bool PSCCalculator::isScopeInclusive(const Event i , const Event j) const
+{
+	auto &g = getGraph();
+	const EventLabel *labi = g.getEventLabel(i);
+	const EventLabel *labj = g.getEventLabel(j);
+	if ((labi->getScope()==2 && labj->getScope()==2 && 
+			labi->getKernelId() == labj->getKernelId() && 
+			labi->getGroupId() == labj->getGroupId()) || 
+		(labi->getScope()==1 && labj->getScope()==1) || 
+		(labi->getScope() == -1 && labj->getScope() == -1)) {
+			return true;
+	}
+	return false;
+}
+//
+void PSCCalculator::addScopInclEdges(const std::vector<Event> from , 
+					const std::vector<Event> to, 
+					Calculator::GlobalRelation &matrix) const
+{
+	auto &g = getGraph();
+	for(auto  i = 0u; i < from.size() ; i++){
+		for(auto j = 0u; j < to.size(); j++){
+			if(isScopeInclusive(from[i],to[j])) {
+				matrix.addEdge(from[i],to[j]);
+			}
+		}
+	}
 }
 
 void PSCCalculator::addInitEdges(const std::vector<Event> &fcs,
@@ -303,10 +340,12 @@ void PSCCalculator::addInitEdges(const std::vector<Event> &fcs,
 				/* Can be casted to WriteLabel by construction */
 				auto *wLab = g.getWriteLabel(w);
 				auto wSuccs = calcSCSuccs(fcs, w);
-				matrix.addEdgesFromTo(preds, wSuccs); /* Adds rb-edges */
+				// matrix.addEdgesFromTo(preds, wSuccs); /* Adds rb-edges */
+				addScopInclEdges(preds, wSuccs,matrix);
 				for (auto &r : wLab->getReadersList()) {
 					auto fenceSuccs = calcSCFencesSuccs(fcs, r);
-					matrix.addEdgesFromTo(fencePreds, fenceSuccs); /*Adds (rb;rf)-edges */
+					// matrix.addEdgesFromTo(fencePreds, fenceSuccs); /*Adds (rb;rf)-edges */
+					addScopInclEdges(fencePreds, fenceSuccs, matrix);
 				}
 			}
 		}

@@ -1397,7 +1397,6 @@ bool GenMCDriver::checkAtomicity(const WriteLabel *wLab)
 
 bool GenMCDriver::ensureConsistentRf(const ReadLabel *rLab, std::vector<Event> &rfs)
 {	
-	WARN("RF Size : "+to_string(rfs.size())+"\n");
 	bool found = false;
 	while (!found) {
 		found = true;
@@ -1844,6 +1843,11 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	auto *EE = getEE();
 	auto &thr = EE->getCurThr();
 
+	if(llvm::isa<BIncFaiReadLabel>(rLab) || llvm::isa<BWaitReadLabel>(rLab)){
+		rLab->setBarrierId(thr.barriedID);
+		EE->incBarrierId();
+	}
+
 	if (inRecoveryMode())
 		return getRecReadRetValue(rLab.get());
 
@@ -1860,9 +1864,10 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	rLab->setScope(scope);
 	rLab->setGroupId(EE->getCurThr().group_id);
 	rLab->setKernelId(EE->getCurThr().kernel_id);
-	// WARN("Load :(" + to_string(rLab->getPos().thread)+ ","+to_string(rLab->getPos().index) + 
-	// 		") scope : "+to_string(rLab->getScope())+" Group id : " + to_string(rLab->getGroupId())+
-	// 		" Kernel id : " + to_string(rLab->getKernelId())+"\n");	
+	WARN("Load :(" + to_string(rLab->getPos().thread)+ ","+to_string(rLab->getPos().index) + 
+			") scope : "+to_string(rLab->getScope())+" Group id : " + to_string(rLab->getGroupId())+
+			" Kernel id : " + to_string(rLab->getKernelId())+"\n");
+		
 
 	rLab->setAnnot(EE->getCurrentAnnotConcretized());
 	updateLabelViews(rLab.get(), deps);
@@ -1958,12 +1963,18 @@ std::vector<Event> GenMCDriver::getRevisitableApproximation(const WriteLabel *sL
 }
 
 void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *deps)
-{
-	if (isExecutionDrivenByGraph())
-		return;
-
+{	
 	auto &g = getGraph();
 	auto *EE = getEE();
+	auto &thr = EE->getCurThr();
+
+	if(llvm::isa<BIncFaiWriteLabel>(wLab)){
+		wLab->setBarrierId(thr.barriedID);
+		EE->incBarrierId();
+	}
+
+	if (isExecutionDrivenByGraph())
+		return;
 
 	/* If it's a valid access, track coherence for this location */
 	g.trackCoherenceAtLoc(wLab->getAddr());
@@ -1971,9 +1982,9 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	wLab->setScope(scope);
 	wLab->setGroupId(EE->getCurThr().group_id);
 	wLab->setKernelId(EE->getCurThr().kernel_id);
-	// WARN("Store :(" + to_string(wLab->getPos().thread)+ ","+to_string(wLab->getPos().index) + 
-	// 		") scope : "+to_string(wLab->getScope())+" Group id : " + to_string(wLab->getGroupId())+
-	// 		" Kernel id : " + to_string(wLab->getKernelId())+"\n");	
+	WARN("Store :(" + to_string(wLab->getPos().thread)+ ","+to_string(wLab->getPos().index) + 
+			") scope : "+to_string(wLab->getScope())+" Group id : " + to_string(wLab->getGroupId())+
+			" Kernel id : " + to_string(wLab->getKernelId())+"\n");	
 
 
 	if (getConf()->helper && g.isRMWStore(&*wLab))
@@ -2651,6 +2662,12 @@ bool GenMCDriver::calcRevisits(const WriteLabel *sLab)
 		setSharedState(std::move(newState));
 
 		notifyEERemoved(*v);
+		if(llvm::isa<BIncFaiWriteLabel>(sLab)){
+			WARN("BRevisit from Barrier Write\n");
+		}
+		WARN("BRevisit :(" + to_string(read.thread)+ ","+to_string(read.index) + 
+			") from write : ("+to_string(write.thread)+"," + to_string(write.index)+
+			")\n");
 		revisitRead(BackwardRevisit(read, write));
 
 		/* If there are idle workers in the thread pool,
