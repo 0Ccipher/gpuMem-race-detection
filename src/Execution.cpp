@@ -4654,6 +4654,7 @@ Interpreter::translateExternalCallArgs(Function *F, const std::vector<GenericVal
 void Interpreter::callFunction(Function *F, const std::vector<GenericValue> &ArgVals,
 			       const std::unique_ptr<EventDeps> &specialDeps)
 {
+  WARN("Executing Function_ "+F->getName()+"\n");
   /* Special handling for internal calls */
   if (isInternalCall(F)) {
     callInternalFunction(F, ArgVals, specialDeps);

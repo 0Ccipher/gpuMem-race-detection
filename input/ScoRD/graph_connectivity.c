@@ -7,12 +7,14 @@
 #include <stdio.h>
 #include <limits.h>
 
-#define WORK_ITEMS_PER_GROUP 2
-#define WORK_ITEMS_PER_KERNEL 2
-#define GLOBAL_WORK_OFFSET 0
-
 #define NBLOCKS 2
 #define NTHREADS 2
+
+#define WORK_ITEMS_PER_GROUP 2
+#define WORK_ITEMS_PER_KERNEL 4
+#define GLOBAL_WORK_OFFSET 0
+
+#define GROUPS ((WORK_ITEMS_PER_KERNEL / WORK_ITEMS_PER_GROUP)+1)
 
 struct ThreadData;
 
@@ -40,11 +42,17 @@ void __VERIFIER_groupsize(int localWorkSize)    ;
  * (u, v) is an edge in the graph
  *
  *************************************************/
-atomic_int V;
-atomic_int E;
-atomic_int edgeListU[10];
-atomic_int edgeListV[10];
-
+#define Edges 2
+#define vertices 3
+atomic_int V=vertices;
+atomic_int E=Edges;
+atomic_int edgeListU[Edges];
+atomic_int edgeListV[Edges];
+atomic_int graphComponents[vertices];// d_vertexComponent
+atomic_int d_head[NBLOCKS];
+atomic_int d_tail[NBLOCKS];
+atomic_int d_base[NBLOCKS];
+atomic_int d_blockId[NBLOCKS];
 
 atomic_int X = 0;
 atomic_int Y = 0;
@@ -60,79 +68,155 @@ struct ThreadData
     int kernel_id;
 };
 
-pthread_barrier_t barr;
+pthread_barrier_t bard;
+pthread_barrier_t bar[GROUPS];
 
-void thr1(){
+void input(){
     __VERIFIER_memory_scope_device();
-    atomic_store_explicit(&X, 42, memory_order_relaxed);
-
-    __VERIFIER_memory_scope_work_group();
-    atomic_thread_fence(memory_order_release);
-
+    atomic_init(&edgeListU[0],1);
     __VERIFIER_memory_scope_device();
-    atomic_store_explicit(&Y, 42, memory_order_relaxed);
-
-    // __VERIFIER_memory_scope_work_group();
-    // atomic_load_explicit(&Z, memory_order_acquire);
-
-    __VERIFIER_memory_scope_work_group();
-    atomic_load_explicit(&w, memory_order_relaxed);
-
-    /* Synchronize */
-        __VERIFIER_memory_scope_work_group();
-		int rc = pthread_barrier_wait(&barr);
-		if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-			printf("Could not wait on barrier\n");
-			pthread_exit(NULL);
-		}
-    __VERIFIER_memory_scope_work_group();
-    atomic_load_explicit(&Z, memory_order_acquire);
-
-    /* Synchronize */
-        __VERIFIER_memory_scope_work_group();
-		rc = pthread_barrier_wait(&barr);
-		if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-			printf("Could not wait on barrier\n");
-			pthread_exit(NULL);
-		}
+    atomic_init(&edgeListV[0],2);
+    __VERIFIER_memory_scope_device();
+    atomic_init(&edgeListU[1],1);
+    __VERIFIER_memory_scope_device();
+    atomic_init(&edgeListV[1],3);
+    
 }
 
-void thr2(){
-    int value = -1;
-    __VERIFIER_memory_scope_device();
-    int tempy = atomic_load_explicit(&Y, memory_order_relaxed);
-    
-    __VERIFIER_memory_scope_work_group();
-    atomic_thread_fence(memory_order_acquire);
-
-    __VERIFIER_memory_scope_device();
-    value = atomic_load_explicit(&X, memory_order_acquire);
-    
-    /* Synchronize */
-        __VERIFIER_memory_scope_work_group();
-		int rc = pthread_barrier_wait(&barr);
-		if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-			printf("Could not wait on barrier\n");
-			pthread_exit(NULL);
-		}
-    
-    __VERIFIER_memory_scope_work_group();
-    atomic_store_explicit(&w, 42, memory_order_relaxed);
-
-    /* Synchronize */
-        __VERIFIER_memory_scope_work_group();
-		rc = pthread_barrier_wait(&barr);
-		if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-			printf("Could not wait on barrier\n");
-			pthread_exit(NULL);
-		}
-
-    __VERIFIER_memory_scope_work_group();
-    atomic_store_explicit(&Z, 42, memory_order_release);
-
-
-
+void devideWork(int size, int value){
+    if(value < size){
+        for(int i=0; i < value ; i++){
+            __VERIFIER_memory_scope_device();
+            atomic_store_explicit(&d_head[i], i, memory_order_seq_cst);
+            __VERIFIER_memory_scope_device();
+            atomic_store_explicit(&d_tail[i], (i+1), memory_order_seq_cst);
+        }
+    }
+    else{
+        int portion = value / size;
+        for(int i=0; i < size ; i++){
+            __VERIFIER_memory_scope_device();
+            atomic_store_explicit(&d_head[i], i*portion, memory_order_seq_cst);
+            __VERIFIER_memory_scope_device();
+            atomic_store_explicit(&d_tail[i], (i+1)*portion, memory_order_seq_cst);
+        }
+        __VERIFIER_memory_scope_device();
+        atomic_store_explicit(&d_tail[size-1], value, memory_order_seq_cst);
+    }
 }
+
+void initKernel(int global_id, int group_id, int local_id, int kernel_id){
+    int tid = local_id;//const int tid = threadIdx.x;
+    int bid = group_id;//int bid       = blockIdx.x;
+    __VERIFIER_memory_scope_device();
+    int base = atomic_load_explicit(&d_base[bid],memory_order_seq_cst);
+    __VERIFIER_memory_scope_device();
+    int blockId = atomic_load_explicit(&d_blockId[bid],memory_order_seq_cst);
+    if(tid == 0){
+        __VERIFIER_memory_scope_device();
+        base = atomic_fetch_add_explicit(&d_head[bid],NTHREADS,memory_order_seq_cst);
+        __VERIFIER_memory_scope_device();
+        atomic_store_explicit(&d_base[bid],base,memory_order_seq_cst);
+        __VERIFIER_memory_scope_work_group();
+        atomic_exchange_explicit(&d_blockId[bid] , bid, memory_order_seq_cst); //atomicExch_block(blockId, bid);
+    }
+     /* Synchronize */
+    __VERIFIER_memory_scope_work_group();
+    int rc = pthread_barrier_wait(&bar[group_id]);
+    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        printf("Could not wait on barrier\n");
+        pthread_exit(NULL);
+    }
+
+    int my_base = atomic_load_explicit(&d_base[bid],memory_order_seq_cst);
+    int n_t_last = atomic_load_explicit(&d_tail[bid],memory_order_seq_cst);
+    while(my_base < n_t_last) {
+        if(tid + my_base < n_t_last) {
+            __VERIFIER_memory_scope_device();
+            atomic_store_explicit(&graphComponents[tid + my_base],tid + my_base,memory_order_seq_cst);
+        }
+#ifdef RACEY
+#else
+        //__syncthreads();
+        /* Synchronize */
+        __VERIFIER_memory_scope_work_group();
+        rc = pthread_barrier_wait(&bar[group_id]);
+        if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+            printf("Could not wait on barrier\n");
+            pthread_exit(NULL);
+        }
+#endif
+
+        if(tid == 0) {
+            __VERIFIER_memory_scope_device();
+            base = atomic_fetch_add_explicit(&d_head[bid],NTHREADS,memory_order_seq_cst);
+            __VERIFIER_memory_scope_device();
+            atomic_store_explicit(&d_base[bid],base,memory_order_seq_cst);
+        }
+
+        //__syncthreads();
+        /* Synchronize */
+        __VERIFIER_memory_scope_work_group();
+        rc = pthread_barrier_wait(&bar[group_id]);
+        if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+            printf("Could not wait on barrier\n");
+            pthread_exit(NULL);
+        }
+
+        my_base = atomic_load_explicit(&d_base[bid],memory_order_seq_cst);
+
+        if(atomic_load_explicit(&d_base[bid],memory_order_seq_cst) < n_t_last)
+            continue;
+
+        //__syncthreads();
+        /* Synchronize */
+        __VERIFIER_memory_scope_work_group();
+        rc = pthread_barrier_wait(&bar[group_id]);
+        if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+            printf("Could not wait on barrier\n");
+            pthread_exit(NULL);
+        }
+
+        if (tid == 0) {
+            int otherBlock = 0;
+            for (int block = (bid + 1);
+                block < (bid + NBLOCKS); block++) {
+                otherBlock = block % NBLOCKS;
+                int h = atomic_fetch_add_explicit(&d_head[otherBlock], 0,memory_order_seq_cst);
+                int t = atomic_load_explicit(&d_tail[otherBlock],memory_order_seq_cst);
+                if ((h + NTHREADS) < t) {
+                    break;
+                }
+            }
+             // *base = atomicAdd(&head[otherBlock], NTHREADS);
+            // atomicExch_block(blockId, otherBlock);
+             __VERIFIER_memory_scope_device();
+             base = atomic_fetch_add_explicit(&d_head[otherBlock],NTHREADS,memory_order_seq_cst);
+            __VERIFIER_memory_scope_device();
+             atomic_store_explicit(&d_base[bid],base,memory_order_seq_cst);
+            __VERIFIER_memory_scope_work_group();
+            atomic_exchange_explicit(&d_blockId[bid] , otherBlock, memory_order_seq_cst);
+           
+        }
+
+        //__syncthreads();
+        /* Synchronize */
+        __VERIFIER_memory_scope_work_group();
+        rc = pthread_barrier_wait(&bar[group_id]);
+        if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+            printf("Could not wait on barrier\n");
+            pthread_exit(NULL);
+        }
+
+        //  bid = atomicAdd_block(blockId, 0);
+        __VERIFIER_memory_scope_work_group();
+        bid = atomic_fetch_add_explicit(&d_blockId[bid] , 0, memory_order_seq_cst);
+
+        my_base = atomic_load_explicit(&d_base[bid],memory_order_seq_cst);
+        n_t_last = atomic_load_explicit(&d_tail[bid],memory_order_seq_cst);
+    }
+}
+
 
 void *kernel1( void *arg) {
     struct ThreadData *data = (struct ThreadData *)arg;
@@ -144,16 +228,16 @@ void *kernel1( void *arg) {
     __VERIFIER_thread_local_id(local_id);
     __VERIFIER_thread_group_id(group_id);
     __VERIFIER_thread_kernel_id(kernel_id);
-    // printf("group-id : %d , local-id : %d , global-id: %d , kernel-id : %d \n",group_id , local_id, global_id, kernel_id);
-    if(local_id == 0)
-        thr1(); // executed by thread1
-    else
-        thr2(); // executed by thread2
+    
+    // initKernel(global_id, group_id , local_id , kernel_id);
     
     return NULL;
 }
 
 int main(int argc, char **argv){
+
+
+    input();
 
     int globalWorkSize = WORK_ITEMS_PER_KERNEL;
     int localWorkSize = WORK_ITEMS_PER_GROUP;
@@ -163,7 +247,7 @@ int main(int argc, char **argv){
     __VERIFIER_groupsize(localWorkSize);
 
     /* Barrier initialization */
-	if (pthread_barrier_init(&barr, NULL, globalWorkSize)) {
+	if (pthread_barrier_init(&bard, NULL, globalWorkSize)) {
 		printf("Could not create a barrier\n");
 		return -1;
 	}
