@@ -2894,7 +2894,6 @@ void Interpreter::callthread_kernel_id(Function *F, const std::vector<GenericVal
 void Interpreter::callsyncthread(Function *F, const std::vector<GenericValue> &ArgVals,
 				const std::unique_ptr<EventDeps> &specialDeps)
 {
-	WARN(" Interpreted SyncThread \n");
 	driver->visitBarrierSync(BarrierSyncLabel::create(nextPos(),BlockageType::SyncThread));
 }
 void Interpreter::callgroupsize(Function *F, const std::vector<GenericValue> &ArgVals,
@@ -2903,7 +2902,6 @@ void Interpreter::callgroupsize(Function *F, const std::vector<GenericValue> &Ar
 	Argument *firstArg = &*F->arg_begin();
 	GenericValue firstArgValue = ArgVals[0];
 	int s = ArgVals[0].IntVal.getLimitedValue();
-	WARN("GroupSize"+std::to_string(s)+"\n");
 	driver->setGroupSize(s);
 }
 void Interpreter::callSpinStart(Function *F, const std::vector<GenericValue> &ArgVals,
@@ -4654,7 +4652,6 @@ Interpreter::translateExternalCallArgs(Function *F, const std::vector<GenericVal
 void Interpreter::callFunction(Function *F, const std::vector<GenericValue> &ArgVals,
 			       const std::unique_ptr<EventDeps> &specialDeps)
 {
-  WARN("Executing Function_ "+F->getName()+"\n");
   /* Special handling for internal calls */
   if (isInternalCall(F)) {
     callInternalFunction(F, ArgVals, specialDeps);

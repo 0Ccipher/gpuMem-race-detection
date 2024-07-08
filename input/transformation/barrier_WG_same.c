@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <limits.h>
 
-#define WORK_ITEMS_PER_GROUP 4
-#define WORK_ITEMS_PER_KERNEL 12
+#define WORK_ITEMS_PER_GROUP 2
+#define WORK_ITEMS_PER_KERNEL 4
 #define GROUPS ((WORK_ITEMS_PER_KERNEL / WORK_ITEMS_PER_GROUP)+1)
 #define GLOBAL_WORK_OFFSET 0
 struct ThreadData;
@@ -43,11 +43,11 @@ pthread_barrier_t barr[GROUPS];
 
 void thr1(int group_id){
     printf("1 Start , group : %d \n",group_id);
-    // __VERIFIER_memory_scope_device();
-    // atomic_store_explicit(&X, 42, memory_order_relaxed);
+    __VERIFIER_memory_scope_device();
+    atomic_store_explicit(&X, 42, memory_order_relaxed);
 
-    // __VERIFIER_memory_scope_work_group();
-    // atomic_thread_fence(memory_order_seq_cst);
+    __VERIFIER_memory_scope_work_group();
+    atomic_thread_fence(memory_order_seq_cst);
 
     __VERIFIER_memory_scope_device();
     // int tempy = atomic_load_explicit(&Y, memory_order_relaxed);
@@ -91,11 +91,11 @@ void thr2(int group_id){
     // atomic_store_explicit(&Y, 42, memory_order_relaxed);
     int tempy = atomic_load_explicit(&Y, memory_order_relaxed);
     
-    // __VERIFIER_memory_scope_work_group();
-    // atomic_thread_fence(memory_order_seq_cst);
+    __VERIFIER_memory_scope_work_group();
+    atomic_thread_fence(memory_order_seq_cst);
 
-    // __VERIFIER_memory_scope_device();
-    // value = atomic_load_explicit(&X, memory_order_acquire);
+    __VERIFIER_memory_scope_device();
+    value = atomic_load_explicit(&X, memory_order_acquire);
     
     /* Synchronize */
     printf("2 reached barrier : %d \n",group_id);

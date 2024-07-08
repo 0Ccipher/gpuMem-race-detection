@@ -430,7 +430,7 @@ public:
 
 	//
 	bool isScopeInclusive(const Event i , const Event j) const;
-
+	bool isScopeInclusive(const Event i , int scope, int group , int kernel) const;
 	/* Returns true if a is hb-before b */
 	bool isHbBefore(Event a, Event b, CheckConsType t = CheckConsType::fast);
 

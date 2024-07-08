@@ -110,9 +110,9 @@ Event ExecutionGraph::getLastThreadReleaseAtLoc(Event upperLimit, SAddr addr) co
 
 Event ExecutionGraph::getLastThreadReleaseAtLocScoped(Event upperLimit, SAddr addr , Event acq, int scope, int group , int kernel) const
 {
-	WARN("ACQ  :(" + to_string(acq.thread)+ ","+to_string(acq.index) +")\t")+
-	(" scope : "+to_string(scope)+" Group id : " + to_string(group)+
-		" Kernel id : " + to_string(kernel)+"\n");
+	// WARN("ACQ  :(" + to_string(acq.thread)+ ","+to_string(acq.index) +")\t")+
+	// (" scope : "+to_string(scope)+" Group id : " + to_string(group)+
+	// 	" Kernel id : " + to_string(kernel)+"\n");
 	for (int i = upperLimit.index - 1; i > 0; i--) {
 		const EventLabel *lab = getEventLabel(Event(upperLimit.thread, i));
 		if (llvm::isa<ThreadCreateLabel>(lab) || llvm::isa<ThreadFinishLabel>(lab) ||
@@ -121,12 +121,7 @@ Event ExecutionGraph::getLastThreadReleaseAtLocScoped(Event upperLimit, SAddr ad
 		}
 		if (auto *fLab = llvm::dyn_cast<FenceLabel>(lab)) {
 			if(fLab->isAtLeastRelease()){
-				WARN("REL Fence :(" + to_string(fLab->getPos().thread)+ ","+to_string(fLab->getPos().index) + 
-					") scope : "+to_string(fLab->getScope())+" Group id : " + to_string(fLab->getGroupId())+
-					" Kernel id : " + to_string(fLab->getKernelId())+"\n");
-				if((fLab->getScope()==2 && scope==2 && fLab->getKernelId() == kernel 
-							&& fLab->getGroupId() == group) 
-						|| (fLab->getScope()==1 && scope==1) || (fLab->getScope() == -1)){
+				if(isScopeInclusive(fLab->getPos() , scope, group ,kernel)){
 					return Event(upperLimit.thread, i);
 				}
 			}
@@ -134,11 +129,11 @@ Event ExecutionGraph::getLastThreadReleaseAtLocScoped(Event upperLimit, SAddr ad
 				
 		}
 		if (auto *wLab = llvm::dyn_cast<WriteLabel>(lab)) {
-			if (wLab->isAtLeastRelease() && wLab->getAddr() == addr)
-			if((wLab->getScope()==2 && scope==2 && wLab->getKernelId() == kernel 
-					&& wLab->getGroupId() == group) 
-					|| (wLab->getScope()==1 && scope==1) || (wLab->getScope() == -1))
-				return Event(upperLimit.thread, i);
+			if(wLab->isAtLeastRelease() && wLab->getAddr() == addr){
+				if(isScopeInclusive(wLab->getPos() , scope, group ,kernel))
+					return Event(upperLimit.thread, i);
+			}
+			
 		}
 	}
 	return Event(upperLimit.thread, 0);
@@ -512,7 +507,7 @@ const EventLabel *ExecutionGraph::addOtherLabelToGraph(std::unique_ptr<EventLabe
 }
 
 
-/************************************************************
+/************************************************************f
  ** Calculation of [(po U rf)*] predecessors and successors
  ***********************************************************/
 
@@ -930,11 +925,26 @@ bool ExecutionGraph::isScopeInclusive(const Event i , const Event j) const
 			labi->getKernelId() == labj->getKernelId() && 
 			labi->getGroupId() == labj->getGroupId()) || 
 		(labi->getScope()==1 && labj->getScope()==1) || 
-		(labi->getScope() == -1 && labj->getScope() == -1)) {
+		(labi->getGroupId() == -1 && labj->getGroupId() == -1)) {
 			return true;
 	}
 	return false;
 }
+
+//
+bool ExecutionGraph::isScopeInclusive(const Event i , int scope, int group , int kernel) const
+{
+	const EventLabel *labi = getEventLabel(i);
+	if ((labi->getScope()==2 && scope==2 && 
+			labi->getKernelId() == kernel && 
+			labi->getGroupId() == group) || 
+		(labi->getScope()==1 && scope ==1) || 
+		(labi->getGroupId() == -1 && group == -1)) {
+			return true;
+	}
+	return false;
+}
+
 const DepView &ExecutionGraph::getPPoRfBefore(Event e) const
 {
 	return getEventLabel(e)->getPPoRfView();
@@ -988,9 +998,6 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 			// 	continue;
 
 			auto labIdx = elems.size();
-			if(i==2 && j==5) WARN("Elem(2,5) Stamp : "+ to_string(lab->getStamp())+"\n");
-			if(i==2 && j==7) WARN("Elem(2,7) Stamp : "+ to_string(lab->getStamp())+"\n");
-			if(i==1 && j==9) WARN("Elem(1,9) Stamp : "+ to_string(lab->getStamp())+"\n");
 			elems.push_back(Event(i, j));
 
 			if (labIdx == thrIdx) {
@@ -1051,7 +1058,6 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 			// }
 		}
 	}
-	WARN(" 1 elems.size"+to_string(elems.size()) + "\t");
 	relation = AdjList<Event, EventHasher>(std::move(elems));
 	for (auto &e : edges)
 		relation.addEdge(e.first, e.second);
@@ -1486,6 +1492,12 @@ void ExecutionGraph::copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) 
 				continue;
 			}
 			auto *nLab = other.addOtherLabelToGraph(getEventLabel(Event(i, j))->clone());
+			auto *gLab = getEventLabel(Event(i, j));
+			/*Also copy the scope,group and kernel info*/
+			const_cast<EventLabel *>(nLab)->setScope(gLab->getScope());
+			const_cast<EventLabel *>(nLab)->setGroupId(gLab->getGroupId());
+			const_cast<EventLabel *>(nLab)->setKernelId(gLab->getKernelId());
+
 			if (auto *wLab = llvm::dyn_cast<WriteLabel>(nLab)) {
 				const_cast<WriteLabel *>(wLab)->removeReader([&v](const Event &r){
 					return !v.contains(r);

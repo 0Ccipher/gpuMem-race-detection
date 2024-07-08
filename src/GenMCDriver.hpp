@@ -87,6 +87,7 @@ public:
 		unsigned explored;        /* Number of complete executions explored */
 		unsigned exploredBlocked; /* Number of blocked executions explored */
 		unsigned exploredMoot;
+		std::set<std::pair<int,int>> races; /*Stores the races*/
 #ifdef ENABLE_GENMC_DEBUG
 		unsigned duplicates;      /* Number of duplicate executions explored */
 #endif
@@ -309,7 +310,7 @@ public:
 	 * execution is invalid), or aborts the exploration */
 	void visitError(Event pos, Status r, const std::string &err = std::string(),
 			Event confEvent = Event::getInitializer());
-
+	void reportRace(Event pos, Event confEvent = Event::getInitializer());
 	/* Handle SyncThreads*/
 	void visitBarrierSync(std::unique_ptr<BarrierSyncLabel> lab);
 

@@ -271,6 +271,9 @@ public:
 		out << " (" << fmtFun(lab.getAddr()) << ", ";
 		printVal(lab.getVal(), lab.getType());
 		out << ")";
+		if(lab.getGroupId() != -1){
+			out << "-[ " << lab.getKernelId() << ", " << lab.getGroupId() << ", " << lab.getScope() <<" ]";
+		}
 	}
 
 	void visitBarrierSyncLabel(const BarrierSyncLabel &lab) { 
@@ -281,6 +284,9 @@ public:
 	void visitFenceLabel(const FenceLabel &lab) {
 		DELEGATE_LABEL(EventLabel);
 		out << lab.getOrdering();
+		if(lab.getGroupId() != -1){
+			out << "-[ " << lab.getKernelId() << ", " << lab.getGroupId() << ", " << lab.getScope() <<" ]";
+		}
 	}
 
 	void visitSmpFenceLabelLKMM(const SmpFenceLabelLKMM &lab) {
@@ -356,6 +362,9 @@ public:
 		LabelPrinterBase::visitReadLabel(lab);
 		out << " ";
 		printRf(lab);
+		if(lab.getGroupId() != -1){
+			out << "-[ " << lab.getKernelId() << ", " << lab.getGroupId() << ", " << lab.getScope() <<" ]";
+		}
 	}
 };
 

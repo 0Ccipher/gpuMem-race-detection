@@ -8,7 +8,7 @@
 #include <limits.h>
 
 #define WORK_ITEMS_PER_GROUP 2
-#define WORK_ITEMS_PER_KERNEL 4
+#define WORK_ITEMS_PER_KERNEL 2
 #define GROUPS ((WORK_ITEMS_PER_KERNEL / WORK_ITEMS_PER_GROUP)+1)
 #define GLOBAL_WORK_OFFSET 0
 struct ThreadData;

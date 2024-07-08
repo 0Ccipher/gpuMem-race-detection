@@ -443,10 +443,13 @@ void GenMCDriver::checkHelpingCasAnnotation()
 
 bool GenMCDriver::isExecutionBlocked() const
 {
-	return std::any_of(getEE()->threads_begin(), getEE()->threads_end(),
+	bool status = false;
+	status = std::any_of(getEE()->threads_begin(), getEE()->threads_end(),
 			   [this](const llvm::Thread &thr){
 				   auto *bLab = llvm::dyn_cast<BlockLabel>(getGraph().getLastThreadLabel(thr.id));
 				   return bLab || thr.isBlocked(); });
+	if(status) WARN("Blocked Execution - Divergence Occured\n");
+	return status;
 }
 
 void GenMCDriver::handleFinishedExecution()
@@ -1037,8 +1040,13 @@ void GenMCDriver::checkForDataRaces(const MemAccessLabel *lab)
 	auto racy = findDataRaceForMemAccess(lab);
 
 	/* If a race is found and the execution is consistent, return it */
-	if (!racy.isInitializer())
-		visitError(lab->getPos(), Status::VS_RaceNotAtomic, "", racy);
+	// if (!racy.isInitializer())
+	// 	visitError(lab->getPos(), Status::VS_RaceNotAtomic, "", racy);
+	/* If this is a new race then, store it to the result */
+
+	if(!racy.isInitializer()){
+		reportRace(lab->getPos(), racy);
+	}
 	return;
 }
 
@@ -1612,18 +1620,18 @@ void GenMCDriver::visitFence(std::unique_ptr<FenceLabel> fLab, const EventDeps *
 		visitFenceLKMM(std::move(fLab), deps);
 		return;
 	}
-
 	if (isExecutionDrivenByGraph())
 		return;
 
 	fLab->setScope(scope);
 	fLab->setGroupId(EE->getCurThr().group_id);
 	fLab->setKernelId(EE->getCurThr().kernel_id);
-	WARN("fence :(" + to_string(fLab->getPos().thread)+ ","+to_string(fLab->getPos().index) + 
-			") scope : "+to_string(fLab->getScope())+" Group id : " + to_string(fLab->getGroupId())+
-			" Kernel id : " + to_string(fLab->getKernelId())+"\n");	
+	// WARN("fence :(" + to_string(fLab->getPos().thread)+ ","+to_string(fLab->getPos().index) + 
+	// 		") scope : "+to_string(fLab->getScope())+" Group id : " + to_string(fLab->getGroupId())+
+	// 		" Kernel id : " + to_string(fLab->getKernelId())+"\n");
+	
 	updateLabelViews(fLab.get(), deps);
-	getGraph().addOtherLabelToGraph(std::move(fLab));
+	auto * lab = getGraph().addOtherLabelToGraph(std::move(fLab));
 	return;
 }
 
@@ -1842,7 +1850,7 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	auto &g = getGraph();
 	auto *EE = getEE();
 	auto &thr = EE->getCurThr();
-
+		
 	if(llvm::isa<BIncFaiReadLabel>(rLab) || llvm::isa<BWaitReadLabel>(rLab)){
 		rLab->setBarrierId(thr.barriedID);
 		EE->incBarrierId();
@@ -1864,11 +1872,10 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	rLab->setScope(scope);
 	rLab->setGroupId(EE->getCurThr().group_id);
 	rLab->setKernelId(EE->getCurThr().kernel_id);
-	WARN("Load :(" + to_string(rLab->getPos().thread)+ ","+to_string(rLab->getPos().index) + 
-			") scope : "+to_string(rLab->getScope())+" Group id : " + to_string(rLab->getGroupId())+
-			" Kernel id : " + to_string(rLab->getKernelId())+"\n");
-		
-
+	// WARN("Load :(" + to_string(rLab->getPos().thread)+ ","+to_string(rLab->getPos().index) + 
+	// 		") scope : "+to_string(rLab->getScope())+" Group id : " + to_string(rLab->getGroupId())+
+	// 		" Kernel id : " + to_string(rLab->getKernelId())+"\n");
+	
 	rLab->setAnnot(EE->getCurrentAnnotConcretized());
 	updateLabelViews(rLab.get(), deps);
 	auto *lab = g.addReadLabelToGraph(std::move(rLab));
@@ -1982,9 +1989,9 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	wLab->setScope(scope);
 	wLab->setGroupId(EE->getCurThr().group_id);
 	wLab->setKernelId(EE->getCurThr().kernel_id);
-	WARN("Store :(" + to_string(wLab->getPos().thread)+ ","+to_string(wLab->getPos().index) + 
-			") scope : "+to_string(wLab->getScope())+" Group id : " + to_string(wLab->getGroupId())+
-			" Kernel id : " + to_string(wLab->getKernelId())+"\n");	
+	// WARN("Store :(" + to_string(wLab->getPos().thread)+ ","+to_string(wLab->getPos().index) + 
+	// 		") scope : "+to_string(wLab->getScope())+" Group id : " + to_string(wLab->getGroupId())+
+	// 		" Kernel id : " + to_string(wLab->getKernelId())+"\n");	
 
 
 	if (getConf()->helper && g.isRMWStore(&*wLab))
@@ -2286,6 +2293,86 @@ View GenMCDriver::getReplayView() const
 		if (llvm::isa<BlockLabel>(g.getLastThreadLabel(i)))
 			--v[i];
 	return v;
+}
+void GenMCDriver::reportRace(Event pos, Event confEvent /* = INIT */)
+{	
+	auto &g = getGraph();
+	auto &thr = getEE()->getCurThr();
+
+	/* If we have already detected an error, no need to report another */
+	if (isHalting())
+		return;
+
+	/* If this is a replay (might happen if one LLVM instruction
+	 * maps to many MC events), do not get into an infinite loop... */
+	if (inReplay())
+		return;
+
+	/* If the execution that led to the error is not consistent, block */
+	if (!isConsistent(ProgramPoint::step)) {
+		return;
+	}
+	if (inRecoveryMode() && !isRecoveryValid(ProgramPoint::step)) {
+		return;
+	}
+
+	const EventLabel *errLab = g.getEventLabel(pos);
+
+	/* If this is an invalid access, change the RF of the offending
+	 * event to BOTTOM, so that we do not try to get its value.
+	 * Don't bother updating the views */
+	if (isInvalidAccessError(Status::VS_OK) && llvm::isa<ReadLabel>(errLab))
+		g.changeRf(errLab->getPos(), Event::getBottom());
+
+	/* Print a basic error message and the graph.
+	 * We have to save the interpreter state as replaying will
+	 * destroy the current execution stack */
+	auto oldState = getEE()->releaseLocalState();
+
+	getEE()->replayExecutionBefore(getReplayView());
+
+
+	const EventLabel *raceLab1 = g.getEventLabel(pos);
+	const EventLabel *raceLab2 = g.getEventLabel(confEvent);
+	Event e1;
+	Event e2;
+	if(llvm::isa<WriteLabel>(raceLab1) && g.isRMWStore(pos)){
+		e1 = g.getPreviousNonTrivial(pos);
+	}
+	else{
+		e1 = pos;
+	}
+	if(llvm::isa<WriteLabel>(raceLab2) && g.isRMWStore(confEvent)){
+		e2 = g.getPreviousNonTrivial(confEvent);
+	}
+	else{
+		e2 = confEvent;
+	}
+
+	/*Remember the race*/
+	auto &thr1 = getEE()->getThrById(e1.thread);
+	auto &thr2 = getEE()->getThrById(e2.thread);
+	if(!thr1.prefixLOC.empty() && !thr2.prefixLOC.empty()){
+		auto &pair1 = thr1.prefixLOC[e1.index];
+		auto &pair2 = thr2.prefixLOC[e2.index];
+		if(pair1.first && pair2.first) {
+			std::string f1 = pair1.second;
+			std::string f2 = pair1.second;
+			std::string inputFile = getConf()->inputFile;
+			Parser::stripSlashes(f1);
+			Parser::stripSlashes(f2);
+			Parser::stripSlashes(inputFile);
+			if (f1 != inputFile || f2 != inputFile)
+				return;
+			if(result.races.find(std::make_pair(pair1.first,pair2.first)) == result.races.end() 
+				&& result.races.find(std::make_pair(pair2.first,pair1.first)) == result.races.end()) {
+				result.races.insert(std::make_pair(pair1.first,pair2.first));
+				WARN("Report Race (L. " + to_string(pair1.first) + ", L." + to_string(pair2.first)+")\n");
+			}
+		}
+	}
+	
+	getEE()->restoreLocalState(std::move(oldState));
 }
 
 void GenMCDriver::visitError(Event pos, Status s, const std::string &err /* = "" */,
@@ -2662,12 +2749,7 @@ bool GenMCDriver::calcRevisits(const WriteLabel *sLab)
 		setSharedState(std::move(newState));
 
 		notifyEERemoved(*v);
-		if(llvm::isa<BIncFaiWriteLabel>(sLab)){
-			WARN("BRevisit from Barrier Write\n");
-		}
-		WARN("BRevisit :(" + to_string(read.thread)+ ","+to_string(read.index) + 
-			") from write : ("+to_string(write.thread)+"," + to_string(write.index)+
-			")\n");
+		
 		revisitRead(BackwardRevisit(read, write));
 
 		/* If there are idle workers in the thread pool,
@@ -2801,6 +2883,10 @@ const WriteLabel *GenMCDriver::completeRevisitedRMW(const ReadLabel *rLab)
 		BUG();
 	}
 	BUG_ON(!wLab);
+	/*Add scope,group and kernel info*/
+	wLab->setScope(rLab->getScope());
+	wLab->setGroupId(rLab->getGroupId());
+	wLab->setKernelId(rLab->getKernelId());
 	updateLabelViews(wLab.get(), nullptr);
 	return g.addWriteLabelToGraph(std::move(wLab), rLab->getRf());
 }

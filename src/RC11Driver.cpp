@@ -78,16 +78,15 @@ void RC11Driver::calcReadViews(ReadLabel *lab)
 		const auto *rfLab = g.getEventLabel(lab->getRf());
 		porf.update(rfLab->getPorfView());
 		if (lab->isAtLeastAcquire()) {
-			if (auto *wLab = llvm::dyn_cast<WriteLabel>(rfLab))
-				if((lab->getScope()==2 && wLab->getScope()==2 && lab->getKernelId() == wLab->getKernelId() 
-					&& lab->getGroupId() == wLab->getGroupId()) 
-					|| (lab->getScope()==1 && wLab->getScope()==1) || (lab->getScope() == -1)){
+			if (auto *wLab = llvm::dyn_cast<WriteLabel>(rfLab)){
+				if(g.isScopeInclusive(lab->getPos() , wLab->getPos())){
 					hb.update(wLab->getMsgView());
 				}
 				else{
 					hb.update(calcWriteMsgViewScoped(wLab , lab->getPos(),lab->getScope(),
-								lab->getGroupId(), lab->getKernelId()));;
+								lab->getGroupId(), lab->getKernelId()));
 				}
+			}
 		}
 	}
 
@@ -120,21 +119,20 @@ void RC11Driver::calcWriteMsgView(WriteLabel *lab)
 	lab->setMsgView(std::move(msg));
 }
 
-View RC11Driver::calcWriteMsgViewScoped(const WriteLabel *lab, Event acq, int scope, int group , int kernel)
+View RC11Driver::calcWriteMsgViewScoped(const WriteLabel *lab, const Event acq, int scope, int group , int kernel)
 {
 	const auto &g = getGraph();
-	auto * acqLab = g.getEventLabel(acq);
 	// /* Should only be called with plain writes */
 	// BUG_ON(llvm::isa<FaiWriteLabel>(lab) || llvm::isa<CasWriteLabel>(lab));
 
-	if (lab->isAtLeastRelease())
-	if ((lab->getScope()==2 && acqLab->getScope()==2 && lab->getKernelId() == acqLab->getKernelId() 
-				&& lab->getGroupId() == acqLab->getGroupId()) 
-			|| (lab->getScope()==1 && acqLab->getScope()==1) || (lab->getScope() == -1))
-		return lab->getHbView();
-	
+	if (lab->isAtLeastRelease()){
+		if (g.isScopeInclusive(lab->getPos() ,scope, group ,kernel))
+			return lab->getHbView();
+	}
+		
 	return g.getEventLabel(g.getLastThreadReleaseAtLocScoped(lab->getPos(),
-								  lab->getAddr(), acq, scope, group , kernel))->getHbView();
+				lab->getAddr(), acq, scope, group , kernel))->getHbView();
+	
 }
 
 void RC11Driver::calcRMWWriteMsgView(WriteLabel *lab)
@@ -153,16 +151,16 @@ void RC11Driver::calcRMWWriteMsgView(WriteLabel *lab)
 	const ReadLabel *rLab = static_cast<const ReadLabel *>(pLab);
 	// if (auto *wLab = llvm::dyn_cast<WriteLabel>(g.getEventLabel(rLab->getRf())))
 	// 	msg.update(wLab->getMsgView());
-	if (auto *wLab = llvm::dyn_cast<WriteLabel>(g.getEventLabel(rLab->getRf())))
-		if((lab->getScope()==2 && wLab->getScope()==2 && lab->getKernelId() == wLab->getKernelId() 
-			&& lab->getGroupId() == wLab->getGroupId()) 
-			|| (lab->getScope()==1 && wLab->getScope()==1) || (lab->getScope() == -1)){
+	if (auto *wLab = llvm::dyn_cast<WriteLabel>(g.getEventLabel(rLab->getRf()))){
+		if(g.isScopeInclusive(wLab->getPos() , rLab->getPos())){
 			msg.update(wLab->getMsgView());
 		}
 		else{
-			msg.update(calcWriteMsgViewScoped(wLab , lab->getPos(),lab->getScope(),
-						lab->getGroupId(), lab->getKernelId()));;
+			msg.update(calcWriteMsgViewScoped(wLab , rLab->getPos(),rLab->getScope(),
+						rLab->getGroupId(), rLab->getKernelId()));;
 		}
+	}
+		
 
 	if (rLab->isAtLeastRelease())
 		msg.update(lab->getHbView());
@@ -173,7 +171,7 @@ void RC11Driver::calcRMWWriteMsgView(WriteLabel *lab)
 	lab->setMsgView(std::move(msg));
 }
 
-void RC11Driver::calcFenceRelRfPoBefore(Event last, View &v,int scope, int group , int kernel)
+void RC11Driver::calcFenceRelRfPoBefore(Event last, View &v, Event acq , int scope, int group , int kernel)
 {
 	const auto &g = getGraph();
 	for (auto i = last.index; i > 0; i--) {
@@ -185,17 +183,17 @@ void RC11Driver::calcFenceRelRfPoBefore(Event last, View &v,int scope, int group
 		auto *rLab = static_cast<const ReadLabel *>(lab);
 		if (rLab->isAtMostRelease()) {
 			const EventLabel *rfLab = g.getEventLabel(rLab->getRf());
-			if (auto *wLab = llvm::dyn_cast<WriteLabel>(rfLab))
-			if ((rLab->getScope()==2 && wLab->getScope()==2 && rLab->getKernelId() == wLab->getKernelId() 
-					&& rLab->getGroupId() == wLab->getGroupId()) 
-				|| (rLab->getScope()==1 && wLab->getScope()==1) || (rLab->getScope() == -1)){
-					v.update(calcWriteMsgViewScoped(wLab,last,scope,
+			if (auto *wLab = llvm::dyn_cast<WriteLabel>(rfLab)){
+				if (g.isScopeInclusive(wLab->getPos() , rLab->getPos())){
+					v.update(calcWriteMsgViewScoped(wLab,acq,scope,
 								group, kernel));
-					std::string str = "";
-					llvm::raw_string_ostream s(str);
-					v.printData(s);
-					WARN("Updated " + s.str() + "\n");
-				}	
+					// std::string str = "";
+					// llvm::raw_string_ostream s(str);
+					// v.printData(s);
+					// WARN("Updated " + s.str() + "\n");
+				}
+			}
+				
 		}
 	}
 }
@@ -208,7 +206,7 @@ void RC11Driver::calcFenceViews(FenceLabel *lab)
 	View porf = calcBasicPorfView(lab->getPos());
 
 	if (lab->isAtLeastAcquire())
-		calcFenceRelRfPoBefore(lab->getPos().prev(), hb, lab->getScope() , lab->getGroupId() , lab->getKernelId());
+		calcFenceRelRfPoBefore(lab->getPos().prev(), hb, lab->getPos(), lab->getScope() , lab->getGroupId() , lab->getKernelId());
 
 	lab->setHbView(std::move(hb));
 	lab->setPorfView(std::move(porf));
@@ -337,6 +335,8 @@ void RC11Driver::updateLabelViews(EventLabel *lab, const EventDeps *deps) /* dep
 
 bool RC11Driver::areInDataRace(const MemAccessLabel *aLab, const MemAccessLabel *bLab)
 {
+	// WARN("Check if Racing (" + std::__cxx11::to_string(aLab->getPos().thread) + "," + std::__cxx11::to_string(aLab->getPos().index)+")\t") +
+	// 	("  (" + std::__cxx11::to_string(bLab->getPos().thread) + "," + std::__cxx11::to_string(bLab->getPos().index)+")\n");
 	/* If there is an HB ordering between the two events, there is no race */
 	if (isHbBefore(aLab->getPos(), bLab->getPos()) ||
 	    isHbBefore(bLab->getPos(), aLab->getPos()) || aLab == bLab)
@@ -345,7 +345,7 @@ bool RC11Driver::areInDataRace(const MemAccessLabel *aLab, const MemAccessLabel 
 	/* If both accesses are atomic, there is no race */
 	/* Note: one check suffices because a variable is either
 	 * atomic or not atomic, but we have not checked the address yet */
-	if (!aLab->isNotAtomic() && !bLab->isNotAtomic())
+	if (!aLab->isNotAtomic() && !bLab->isNotAtomic() && getGraph().isScopeInclusive(aLab->getPos(),bLab->getPos()))
 		return false;
 
 	/* If they access a different address, there is no race */

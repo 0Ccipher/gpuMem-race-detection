@@ -96,6 +96,14 @@ void printResults(const std::shared_ptr<const Config> &conf,
 	if (res.exploredMoot) {
 		llvm::outs() << " (" << res.exploredMoot << " mooted)";
 	}
+	if(!res.races.empty()){
+		llvm::outs() << "\nRaces Detected: " ;
+		for(auto it=res.races.begin() ; it != res.races.end() ; it++){
+			llvm::outs() << "\n\tL." << it->first;
+			llvm::outs() << "\tL." << it->second;
+			
+		}
+	}
 	llvm::outs() << "\nTotal wall-clock time: "
 		     << llvm::format("%.2f", elapsed.count() * 1e-3)
 		     << "s\n";
