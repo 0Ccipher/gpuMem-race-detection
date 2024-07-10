@@ -10,7 +10,7 @@
 #define sc memory_order_seq_cst
 
 #define NBLOCKS 2
-#define NTHREADS 2
+#define NTHREADS 1
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
@@ -44,8 +44,8 @@ void __VERIFIER_groupsize(int localWorkSize)    ;
  * (u, v) is an edge in the graph
  *
  *************************************************/
-#define Edges 6
-#define vertices 7
+#define Edges 3
+#define vertices 4
 atomic_int V=vertices;
 atomic_int E=Edges;
 atomic_int edgeSetU[Edges];
@@ -54,7 +54,7 @@ atomic_int graphComponents[vertices];// d_vertexComponent
 atomic_int d_head[NBLOCKS];
 atomic_int d_tail[NBLOCKS];
 atomic_int d_base[NBLOCKS];
-atomic_int d_blockId[NBLOCKS];
+atomic_int d_blockIds[NBLOCKS];
 
 atomic_int X = 0;
 atomic_int Y = 0;
@@ -86,22 +86,22 @@ void input(){
     atomic_init(&edgeSetU[1],2);
     __VERIFIER_memory_scope_device();
     atomic_init(&edgeSetV[1],3);
-     __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetU[1],3);
-    __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetV[1],4);
-     __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetU[1],4);
-    __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetV[1],5);
-     __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetU[1],5);
-    __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetV[1],6);
+    //  __VERIFIER_memory_scope_device();
+    // atomic_init(&edgeSetU[1],3);
+    // __VERIFIER_memory_scope_device();
+    // atomic_init(&edgeSetV[1],4);
+    //  __VERIFIER_memory_scope_device();
+    // atomic_init(&edgeSetU[1],4);
+    // __VERIFIER_memory_scope_device();
+    // atomic_init(&edgeSetV[1],5);
+    //  __VERIFIER_memory_scope_device();
+    // atomic_init(&edgeSetU[1],5);
+    // __VERIFIER_memory_scope_device();
+    // atomic_init(&edgeSetV[1],6);
     
 }
 
-void devideWork(int size, int value){
+void divideWork(int size, int value){
     if(value < size){
         for(int i=0; i < value ; i++){
             __VERIFIER_memory_scope_device();
@@ -126,17 +126,16 @@ void devideWork(int size, int value){
 void initKernel(int global_id, int group_id, int local_id, int kernel_id){
     int tid = local_id;//const int tid = threadIdx.x;
     int bid = group_id;//int bid       = blockIdx.x;
-    __VERIFIER_memory_scope_device();
-    int base = atomic_load_explicit(&d_base[bid],sc);
-    __VERIFIER_memory_scope_device();
-    int blockId = atomic_load_explicit(&d_blockId[bid],sc);
+    atomic_int *base = &d_base[bid]; //int *base     = &bases[bid];
+    atomic_int *blockId = &d_blockIds[bid]; //int *blockId  = &blockIds[bid];
+    
     if(tid == 0){
         __VERIFIER_memory_scope_device();
-        base = atomic_fetch_add_explicit(&d_head[bid],NTHREADS,sc);
-        __VERIFIER_memory_scope_device();
-        atomic_store_explicit(&d_base[bid],base,sc);
+        *base = atomic_fetch_add_explicit(&d_head[bid],NTHREADS,sc);
+        // __VERIFIER_memory_scope_device();
+        // atomic_store_explicit(&d_base[bid],base,sc);
         __VERIFIER_memory_scope_work_group();
-        atomic_exchange_explicit(&d_blockId[bid] , bid, sc); //atomicExch_block(blockId, bid);
+        atomic_exchange_explicit(blockId , bid, sc); //atomicExch_block(blockId, bid);
     }
      /* Synchronize */
     __VERIFIER_memory_scope_work_group();
@@ -147,10 +146,10 @@ void initKernel(int global_id, int group_id, int local_id, int kernel_id){
     }
 
     __VERIFIER_memory_scope_device();
-    int my_base = atomic_load_explicit(&d_base[bid],sc);
+    int my_base = atomic_load_explicit(base,sc);
     __VERIFIER_memory_scope_device();
     int n_t_last = atomic_load_explicit(&d_tail[bid],sc);
-    printf("my_base : %d,  n_t_last : %d \n",my_base,n_t_last);
+
     while(my_base < n_t_last) {
         if(tid + my_base < n_t_last) {
             __VERIFIER_memory_scope_device();
@@ -170,9 +169,9 @@ void initKernel(int global_id, int group_id, int local_id, int kernel_id){
 
         if(tid == 0) {
             __VERIFIER_memory_scope_device();
-            base = atomic_fetch_add_explicit(&d_head[bid],NTHREADS,sc);
-            __VERIFIER_memory_scope_device();
-            atomic_store_explicit(&d_base[bid],base,sc);
+           *base = atomic_fetch_add_explicit(&d_head[bid],NTHREADS,sc);
+            // __VERIFIER_memory_scope_device();
+            // atomic_store_explicit(&d_base[bid],base,sc);
         }
 
         //__syncthreads();
@@ -185,10 +184,10 @@ void initKernel(int global_id, int group_id, int local_id, int kernel_id){
         }
 
         __VERIFIER_memory_scope_device();
-        my_base = atomic_load_explicit(&d_base[bid],sc);
+        my_base = atomic_load_explicit(base,sc);
 
         __VERIFIER_memory_scope_device();
-        if(atomic_load_explicit(&d_base[bid],sc) < n_t_last)
+        if(atomic_load_explicit(base,sc) < n_t_last)
             continue;
 
         //__syncthreads();
@@ -216,11 +215,11 @@ void initKernel(int global_id, int group_id, int local_id, int kernel_id){
              // *base = atomicAdd(&head[otherBlock], NTHREADS);
             // atomicExch_block(blockId, otherBlock);
              __VERIFIER_memory_scope_device();
-             base = atomic_fetch_add_explicit(&d_head[otherBlock],NTHREADS,sc);
-            __VERIFIER_memory_scope_device();
-             atomic_store_explicit(&d_base[bid],base,sc);
+            *base = atomic_fetch_add_explicit(&d_head[otherBlock],NTHREADS,sc);
+            // __VERIFIER_memory_scope_device();
+            //  atomic_store_explicit(&d_base[bid],base,sc);
             __VERIFIER_memory_scope_work_group();
-            atomic_exchange_explicit(&d_blockId[bid] , otherBlock, sc);
+            atomic_exchange_explicit(blockId , otherBlock, sc);
            
         }
 
@@ -235,10 +234,10 @@ void initKernel(int global_id, int group_id, int local_id, int kernel_id){
 
         //  bid = atomicAdd_block(blockId, 0);
         __VERIFIER_memory_scope_work_group();
-        int bid1 = atomic_fetch_add_explicit(&d_blockId[bid] , 0, sc);
+        bid = atomic_fetch_add_explicit(blockId , 0, sc);
 
         __VERIFIER_memory_scope_device();
-        my_base = atomic_load_explicit(&d_base[bid],sc);
+        my_base = atomic_load_explicit(base,sc);
         __VERIFIER_memory_scope_device();
         n_t_last = atomic_load_explicit(&d_tail[bid],sc);
     }
@@ -249,17 +248,16 @@ void linkKernel(int global_id, int group_id, int local_id, int kernel_id)
   
     int tid = local_id;//const int tid = threadIdx.x;
     int bid = group_id;//int bid       = blockIdx.x;
-    __VERIFIER_memory_scope_device();
-    int base = atomic_load_explicit(&d_base[bid],sc);
-    __VERIFIER_memory_scope_device();
-    int blockId = atomic_load_explicit(&d_blockId[bid],sc);
+    atomic_int *base = &d_base[bid]; //int *base     = &bases[bid];
+    atomic_int *blockId = &d_blockIds[bid]; //int *blockId  = &blockIds[bid];
+    
     if(tid == 0){
         __VERIFIER_memory_scope_device();
-        base = atomic_fetch_add_explicit(&d_head[bid],NTHREADS,sc);
-        __VERIFIER_memory_scope_device();
-        atomic_store_explicit(&d_base[bid],base,sc);
+        *base = atomic_fetch_add_explicit(&d_head[bid],NTHREADS,sc);
+        // __VERIFIER_memory_scope_device();
+        // atomic_store_explicit(&d_base[bid],base,sc);
         __VERIFIER_memory_scope_work_group();
-        atomic_exchange_explicit(&d_blockId[bid] , bid, sc); //atomicExch_block(blockId, bid);
+        atomic_exchange_explicit(blockId , bid, sc); //atomicExch_block(blockId, bid);
     }
     // __syncthreads();
     /* Synchronize */
@@ -271,7 +269,7 @@ void linkKernel(int global_id, int group_id, int local_id, int kernel_id)
     }
 
     __VERIFIER_memory_scope_device();
-    int my_base = atomic_load_explicit(&d_base[bid],sc);
+    int my_base = atomic_load_explicit(base,sc);
     __VERIFIER_memory_scope_device();
     int n_t_last = atomic_load_explicit(&d_tail[bid],sc);
     
@@ -318,12 +316,12 @@ void linkKernel(int global_id, int group_id, int local_id, int kernel_id)
 
         if(tid == 0) {
              __VERIFIER_memory_scope_device();
-            int base = atomic_fetch_add(&d_head[bid], NTHREADS);
-             __VERIFIER_memory_scope_device();
-            atomic_store_explicit(&d_base[bid],base,sc);
+            *base = atomic_fetch_add(&d_head[bid], NTHREADS);
+            // __VERIFIER_memory_scope_device();
+            // atomic_store_explicit(&d_base[bid],base,sc);
         }
 
-         // __syncthreads();
+        // __syncthreads();
         /* Synchronize */
         __VERIFIER_memory_scope_work_group();
        rc = pthread_barrier_wait(&barg[group_id]);
@@ -333,10 +331,10 @@ void linkKernel(int global_id, int group_id, int local_id, int kernel_id)
         }
 
          __VERIFIER_memory_scope_device();
-        my_base = atomic_load_explicit(&d_base[bid],sc);
+        my_base = atomic_load_explicit(base,sc);
 
          __VERIFIER_memory_scope_device();
-        if(atomic_load_explicit(&d_base[bid],sc) < n_t_last)
+        if(atomic_load_explicit(base,sc) < n_t_last)
             continue;
 
         // __syncthreads();
@@ -364,17 +362,17 @@ void linkKernel(int global_id, int group_id, int local_id, int kernel_id)
 #ifdef RACEY
             // *base = atomicAdd_block(&head[otherBlock], NTHREADS);
             __VERIFIER_memory_scope_work_group();
-            base = atomic_fetch_add(&d_head[otherBlock], NTHREADS);
-            __VERIFIER_memory_scope_device();
-            atomic_store_explicit(&d_base[bid],base,sc);
+            *base = atomic_fetch_add(&d_head[otherBlock], NTHREADS);
+            // __VERIFIER_memory_scope_device();
+            // atomic_store_explicit(&d_base[bid],base,sc);
 #else
             __VERIFIER_memory_scope_device();
-            base = atomic_fetch_add(&d_head[otherBlock], NTHREADS);
-            __VERIFIER_memory_scope_device();
-            atomic_store_explicit(&d_base[bid],base,sc);
+            *base = atomic_fetch_add(&d_head[otherBlock], NTHREADS);
+            // __VERIFIER_memory_scope_device();
+            // atomic_store_explicit(&d_base[bid],base,sc);
 #endif
             __VERIFIER_memory_scope_work_group();
-            atomic_exchange_explicit(&d_blockId[bid], otherBlock,sc);
+            atomic_exchange_explicit(blockId, otherBlock,sc);
         }
         // __syncthreads();
         /* Synchronize */
@@ -386,16 +384,163 @@ void linkKernel(int global_id, int group_id, int local_id, int kernel_id)
         }
      
         __VERIFIER_memory_scope_work_group();
-        int bid1 = atomic_fetch_add_explicit(&d_blockId[bid] , 0, sc);
+        bid = atomic_fetch_add_explicit(blockId , 0, sc);
 
         __VERIFIER_memory_scope_device();
-        my_base = atomic_load_explicit(&d_base[bid],sc);
+        my_base = atomic_load_explicit(base,sc);
         __VERIFIER_memory_scope_device();
         n_t_last = atomic_load_explicit(&d_tail[bid],sc);
     
     }
 }
 
+void compressKernel(int global_id, int group_id, int local_id, int kernel_id)
+{
+    int tid = local_id;//const int tid = threadIdx.x;
+    int bid = group_id;//int bid       = blockIdx.x;
+    atomic_int *base = &d_base[bid]; //int *base     = &bases[bid];
+    atomic_int *blockId = &d_blockIds[bid]; //int *blockId  = &blockIds[bid];
+    
+    if(tid == 0){
+        __VERIFIER_memory_scope_device();
+        *base = atomic_fetch_add_explicit(&d_head[bid],NTHREADS,sc);
+        // __VERIFIER_memory_scope_device();
+        // atomic_store_explicit(&d_base[bid],base,sc);
+        __VERIFIER_memory_scope_work_group();
+        atomic_exchange_explicit(&d_blockIds[bid] , bid, sc); //atomicExch_block(blockId, bid);
+    }
+
+    // __syncthreads();
+    /* Synchronize */
+    __VERIFIER_memory_scope_work_group();
+    int rc = pthread_barrier_wait(&barg[group_id]);
+    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        printf("Could not wait on barrier\n");
+        pthread_exit(NULL);
+    }
+
+    __VERIFIER_memory_scope_device();
+    int my_base = atomic_load_explicit(base,sc);
+    __VERIFIER_memory_scope_device();
+    int n_t_last = atomic_load_explicit(&d_tail[bid],sc);
+    
+    while(my_base < n_t_last) {
+        if(tid + my_base < n_t_last) {
+            __VERIFIER_memory_scope_device();
+            int current = atomic_fetch_add_explicit(&graphComponents[tid + my_base], 0,sc);
+            __VERIFIER_memory_scope_device();
+            int parent = atomic_fetch_add_explicit(&graphComponents[current], 0,sc);
+
+            while (current != parent) {
+                int cmpcurrent = current;
+                __VERIFIER_memory_scope_device();
+                int val = atomic_compare_exchange_strong(&graphComponents[tid + my_base], &cmpcurrent, parent);
+                if(val == current) {
+                    // Successful swap, continue compression
+                    current = parent;
+                    __VERIFIER_memory_scope_device();
+                    parent = atomic_fetch_add_explicit(&graphComponents[current], 0,sc);
+                }
+                else {
+                    // Unsuccessful swap, restart compression
+                    __VERIFIER_memory_scope_device();
+                    current = atomic_fetch_add(&graphComponents[tid + my_base], 0);
+                    __VERIFIER_memory_scope_device();
+                    parent = atomic_fetch_add(&graphComponents[current], 0);
+                }
+            }
+ 
+        }
+#ifdef RACEY
+#else
+        // __syncthreads();
+            /* Synchronize */
+        __VERIFIER_memory_scope_work_group();
+       rc = pthread_barrier_wait(&barg[group_id]);
+        if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+            printf("Could not wait on barrier\n");
+            pthread_exit(NULL);
+        }
+#endif
+        if(tid == 0) {
+             __VERIFIER_memory_scope_device();
+            *base = atomic_fetch_add(&d_head[bid], NTHREADS);
+            //  __VERIFIER_memory_scope_device();
+            // atomic_store_explicit(&d_base[bid],base,sc);
+        }
+
+        // __syncthreads();
+        /* Synchronize */
+        __VERIFIER_memory_scope_work_group();
+       rc = pthread_barrier_wait(&barg[group_id]);
+        if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+            printf("Could not wait on barrier\n");
+            pthread_exit(NULL);
+        }
+
+         __VERIFIER_memory_scope_device();
+        my_base = atomic_load_explicit(base,sc);
+
+         __VERIFIER_memory_scope_device();
+        if(atomic_load_explicit(base,sc) < n_t_last)
+            continue;
+
+        // __syncthreads();
+        /* Synchronize */
+        __VERIFIER_memory_scope_work_group();
+       rc = pthread_barrier_wait(&barg[group_id]);
+        if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+            printf("Could not wait on barrier\n");
+            pthread_exit(NULL);
+        }
+
+        if (tid == 0) {
+            int otherBlock = 0;
+            for (int block = (bid + 1);
+                block < (bid + NBLOCKS); block++) {
+                otherBlock = block % NBLOCKS;
+                __VERIFIER_memory_scope_device();
+                int h = atomic_fetch_add(&d_head[otherBlock], 0);
+                __VERIFIER_memory_scope_device();
+                int t = atomic_load_explicit(&d_tail[otherBlock],sc);
+                if ((h + NTHREADS) < t) {
+                    break;
+                }
+            }
+#ifdef RACEY
+            // *base = atomicAdd_block(&head[otherBlock], NTHREADS);
+            __VERIFIER_memory_scope_work_group();
+            *base = atomic_fetch_add(&d_head[otherBlock], NTHREADS);
+            // __VERIFIER_memory_scope_device();
+            // atomic_store_explicit(&d_base[bid],base,sc);
+#else
+            __VERIFIER_memory_scope_device();
+            *base = atomic_fetch_add(&d_head[otherBlock], NTHREADS);
+            // __VERIFIER_memory_scope_device();
+            // atomic_store_explicit(&d_base[bid],base,sc);
+#endif
+            __VERIFIER_memory_scope_work_group();
+            atomic_exchange_explicit(blockId, otherBlock,sc);
+        }
+        //__syncthreads();
+        /* Synchronize */
+        __VERIFIER_memory_scope_work_group();
+        rc = pthread_barrier_wait(&barg[group_id]);
+        if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+            printf("Could not wait on barrier\n");
+            pthread_exit(NULL);
+        }
+
+        //  bid = atomicAdd_block(blockId, 0);
+        __VERIFIER_memory_scope_work_group();
+        int bid1 = atomic_fetch_add_explicit(&d_blockIds[bid] , 0, sc);
+
+        __VERIFIER_memory_scope_device();
+        my_base = atomic_load_explicit(&d_base[bid],sc);
+        __VERIFIER_memory_scope_device();
+        n_t_last = atomic_load_explicit(&d_tail[bid],sc);
+    }
+}
 void *kernel1( void *arg) {
     struct ThreadData *data = (struct ThreadData *)arg;
     int global_id = data->global_id;
@@ -407,6 +552,7 @@ void *kernel1( void *arg) {
     __VERIFIER_thread_group_id(group_id);
     __VERIFIER_thread_kernel_id(kernel_id);
     
+    divideWork(NBLOCKS, V);
     initKernel(global_id, group_id , local_id , kernel_id);
     int rc = pthread_barrier_wait(&bard);
     if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
@@ -414,13 +560,18 @@ void *kernel1( void *arg) {
         printf("Could not wait on barrier\n");
         pthread_exit(NULL);
     }
+    divideWork(NBLOCKS, E);
     linkKernel(global_id, group_id , local_id , kernel_id);
-     rc = pthread_barrier_wait(&bard);
+    rc = pthread_barrier_wait(&bard);
     if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
         
         printf("Could not wait on barrier\n");
         pthread_exit(NULL);
     }
+    divideWork(NBLOCKS, V);
+    compressKernel(global_id, group_id , local_id , kernel_id);
+
+    printf("total components , TODO\n");
     return NULL;
 }
 

@@ -104,6 +104,9 @@ void printResults(const std::shared_ptr<const Config> &conf,
 			
 		}
 	}
+	if(res.races.empty()){
+		llvm::outs() << "\nNo Race Detected: \n" ;
+	}
 	llvm::outs() << "\nTotal wall-clock time: "
 		     << llvm::format("%.2f", elapsed.count() * 1e-3)
 		     << "s\n";
