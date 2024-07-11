@@ -2368,6 +2368,7 @@ void GenMCDriver::reportRace(Event pos, Event confEvent /* = INIT */)
 				&& result.races.find(std::make_pair(pair2.first,pair1.first)) == result.races.end()) {
 				result.races.insert(std::make_pair(pair1.first,pair2.first));
 				WARN("Report Race (L. " + to_string(pair1.first) + ", L." + to_string(pair2.first)+")\n");
+				++result.racecount;
 			}
 		}
 	}
@@ -3285,7 +3286,8 @@ llvm::raw_ostream& operator<<(llvm::raw_ostream &s,
 	case Status::VS_Liveness:
 		return s << "Liveness violation";
 	case Status::VS_RaceNotAtomic:
-		return s << "Non-Atomic race";
+		// return s << "Non-Atomic race";
+		return s << "Data Race";
 	case Status::VS_RaceFreeMalloc:
 		return s << "Malloc-Free race";
 	case Status::VS_FreeNonMalloc:

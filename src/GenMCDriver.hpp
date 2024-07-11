@@ -88,12 +88,13 @@ public:
 		unsigned exploredBlocked; /* Number of blocked executions explored */
 		unsigned exploredMoot;
 		std::set<std::pair<int,int>> races; /*Stores the races*/
+		unsigned racecount;
 #ifdef ENABLE_GENMC_DEBUG
 		unsigned duplicates;      /* Number of duplicate executions explored */
 #endif
 		std::string message;      /* A message to be printed */
 
-		Result() : status(Status::VS_OK), explored(0), exploredBlocked(0), exploredMoot(0),
+		Result() : status(Status::VS_OK), explored(0), exploredBlocked(0), exploredMoot(0), racecount(0),
 #ifdef ENABLE_GENMC_DEBUG
 			   duplicates(0),
 #endif
@@ -108,6 +109,7 @@ public:
 			explored += other.explored;
 			exploredBlocked += other.exploredBlocked;
 			exploredMoot += other.exploredMoot;
+			racecount += other.racecount;
 #ifdef ENABLE_GENMC_DEBUG
 			duplicates += other.duplicates;
 #endif

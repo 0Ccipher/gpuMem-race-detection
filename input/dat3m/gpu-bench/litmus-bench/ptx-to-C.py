@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright (C) 2022 Omkar
+# Copyright (C) 2024 Omkar
 # Based on source code of Carl Leonardsson
 
 import re
@@ -211,97 +211,14 @@ def ptx_andi(reg_init,toks):
     reg_init[toks[1]] = tgt_reg
     return '  int '+tgt_reg+' = '+op1+' & '+op2+';\n'
 
-def ptx_stw(reg_init,toks):
-    if toks[1] in reg_init:
-        val = reg_init[toks[1]]
-    else:
-        val = '0'
-    if val.startswith('vars['): # value is from a variable
-        val =  'atomic_load_explicit(&'+val+', memory_order_acquire)'
-    if toks[2] != '0':
-        raise Exception('Non-zero offset in stw: {0}'.format(toks[2]))
-    if toks[3] in reg_init:
-        addr = reg_init[toks[3]]
-    else:
-        raise Exception('Uninitialized address used in stw: {0}'.format(toks[3]))
-    if addr.startswith('vars['):
-        return '  atomic_store_explicit(&'+addr+', '+val+', memory_order_release);\n'
-    else:
-        raise Exception("The benchmark is containing some unsupported address operations.")
     
-def ptx_stwx(reg_init,toks):
-    if toks[1] in reg_init:
-        val = reg_init[toks[1]]
-    else:
-        val = '0'
-    if val.startswith('vars['): # value is from a variable
-        val =  'atomic_load_explicit(&'+val+', memory_order_acquire)'
-    if toks[2] in reg_init:
-        offset=reg_init[toks[2]]
-    else:
-        offset='0'
-    if toks[3] in reg_init:
-        addr = reg_init[toks[3]]
-##        print('addr\n')
-##        print(addr)
-    else:
-        raise Exception('Uninitialized address used in stwx: {0}'.format(toks[3]))
-    if addr.startswith('vars['):
-        return '  atomic_store_explicit(&'+addr[:-1]+'+'+offset+'], '+val+', memory_order_release);\n'
-    else:
-        raise Exception("The benchmark is containing some unsupported address operations.")
 
-    
-def ptx_isync(reg_init,toks):
-    return '  atomic_fetch_add_explicit(&__fence_var, 0, memory_order_acq_rel);\n'
+# def ptx_sync(reg_init,toks):
+#     return '  atomic_fetch_add_explicit(&__fence_var, 0, memory_order_acq_rel);\n'
 
-def ptx_eieio(reg_init,toks):
-    return '  atomic_fetch_add_explicit(&__fence_var, 0, memory_order_acq_rel);\n'
-
-
-def ptx_lwsync(reg_init,toks):
-    return '  atomic_fetch_add_explicit(&__fence_var, 0, memory_order_acq_rel);\n'
-
-
-def ptx_sync(reg_init,toks):
-    return '  atomic_fetch_add_explicit(&__fence_var, 0, memory_order_acq_rel);\n'
-
-
-def ptx_lwzx(reg_init,toks):
-    r1=get_fresh_reg()
-    r2=get_fresh_reg()
-    tgt_reg = get_fresh_reg(toks[1])
-    if toks[2] in reg_init:
-        offset=reg_init[toks[2]]
-    else:
-        offset='0'
-    if toks[3] in reg_init:
-        addr = reg_init[toks[3]]
-    else:
-        raise Exception('Uninitialized address used in lwzx: {0}'.format(toks[3]))
-    reg_init[toks[1]] = tgt_reg
-    if addr.startswith('vars['):
-        return '  int '+tgt_reg+' = atomic_load_explicit(&'+addr[:-1]+'+'+offset+'], memory_order_acquire);\n'
-    else:
-        raise Exception("The benchmark is containing some unsupported address operations.")
-
-def ptx_lwz(reg_init,toks):
-    tmp_reg=get_fresh_reg()
-    tgt_reg = get_fresh_reg(toks[1])
-    if toks[2] != '0':
-        raise Exception('Non-zero offset in lwz: {0}'.format(toks[2]))
-    if toks[3] in reg_init:
-        addr = reg_init[toks[3]]
-    else:
-        raise Exception('Uninitialized address used in lwz: {0}'.format(toks[3]))
-    reg_init[toks[1]] = tgt_reg
-    if addr.startswith('vars['): 
-        return '  int '+tgt_reg+' = atomic_load_explicit(&'+addr+', memory_order_acquire);\n'
-    else:
-        raise Exception("The benchmark is containing some unsupported address operations.")
 
 def ptx_ld_acquire_dv(reg_init, toks):
-    print('ptx_ld_acquire_dv',reg_init, toks)
+    # print('ptx_ld_acquire_dv',reg_init, toks)
     tmp_reg=get_fresh_reg()
     tgt_reg = get_fresh_reg(toks[1])
     # if toks[2] != '0':
@@ -324,7 +241,7 @@ def ptx_ld_acquire_dv(reg_init, toks):
         raise Exception("The benchmark is containing some unsupported address operations.")
 
 def ptx_st_release_dv(reg_init,toks):
-    print('ptx_st_release_dv',reg_init, toks)
+    # print('ptx_st_release_dv',reg_init, toks)
     varName = 'var_'+toks[1]
     if varName in varnumMap:
         addr = 'vars['+str(varnumMap[varName])+']'
@@ -339,6 +256,19 @@ def ptx_st_release_dv(reg_init,toks):
         return r
     else:
         raise Exception("The benchmark is containing some unsupported address operations.")
+
+def ptx_thr_data(thr_data):
+    pattern = r'\s*P\d+@cta\s*(\d+),\s*gpu\s(\d+)\s*'
+    m = re.fullmatch(pattern,thr_data)
+    if m != None:
+        r = '  __VERIFIER_thread_local_id('+m.group(2)+');\n'
+        r = r+'  __VERIFIER_thread_group_id('+m.group(1)+');\n'
+        r = r+'  __VERIFIER_thread_kernel_id('+'0'+');\n'
+        return r
+    else:
+        print('None')
+        raise Exception("The benchmark is containing some unsupported @cta , gpu info ")
+    
 
 def instrs_to_c(reg_init,instrs,arch):
     # First find all defined labels
@@ -430,20 +360,14 @@ def instrs_to_c(reg_init,instrs,arch):
                 elif toks[0] == 'cmpw': src = src+ptx_cmpw(regs,toks)
                 elif toks[0] == 'cmpwi': src = src+ptx_cmpwi(regs,toks)
                 elif toks[0] == 'divw': src = src+ptx_divw(regs,toks)
-                elif toks[0] == 'eieio': src = src+ptx_eieio(regs,toks)
-                elif toks[0] == 'isync': src = src+ptx_isync(regs,toks)
                 elif toks[0] == 'li': src = src+ptx_li(regs,toks)
-                elif toks[0] == 'lwsync': src = src+ptx_lwsync(regs,toks)
                 elif toks[0] == 'ld.acquire.gpu': src = src+ptx_ld_acquire_dv(regs,toks)
                 elif toks[0] == 'st.release.gpu': src = src+ptx_st_release_dv(regs,toks)
-                elif toks[0] in ['lwz','ld']: src = src+ptx_lwz(regs,toks)
-                elif toks[0] in ['lwzx','ldx']: src = src+ptx_lwzx(regs,toks)
                 elif toks[0] == 'mr': src = src+ptx_mr(regs,toks)
                 elif toks[0] == 'mullw': src = src+ptx_mullw(regs,toks)
-                elif toks[0] in ['stw','std']: src = src+ptx_stw(regs,toks)
-                elif toks[0] in ['stwx','stdx']: src = src+ptx_stwx(regs,toks)
-                elif toks[0] == 'sync': src = src+ptx_sync(regs,toks)
+                # elif toks[0] == 'sync': src = src+ptx_sync(regs,toks)
                 elif toks[0] == 'xor': src = src+ptx_xor(regs,toks)
+                elif re.fullmatch(r'\s*P\d+@cta\s*\d+,\s*gpu\s\d+\s*',instrs[pc]): src=src+ptx_thr_data(instrs[pc])
                 else:
                     raise Exception('Unknown assembly mnemonic: '+toks[0])
             pc=pc+1
@@ -591,7 +515,8 @@ def litc(fname):
         arch='PTX'
     else:
         raise Exception("Failed to parse architecture. Should be 'PTX'.")
-    m = re.fullmatch('[^{]*\\{([^}]*)\\}\\s*;?[^;]*;([^~]*)~?\\s*(exists|forall)((?:.|\n)*)',s)
+    # m = re.fullmatch('[^{]*\\{([^}]*)\\}\\s*;?[^;]*;([^~]*)~?\\s*(exists|forall)((?:.|\n)*)',s)
+    m = re.fullmatch('[^{]*\\{([^}]*)\\}\\s*;?([^~]*)~?\\s*(exists|forall)((?:.|\n)*)',s)
     if m == None:
         raise Exception("Failed to parse litmus test.")
     init = m.group(1)
@@ -601,11 +526,18 @@ def litc(fname):
     (vs,rs,crs) = parse_init(init)
     c_codes = parse_code(rs,crs,code,arch)
     (main_cond_check,sub_cond_checks,atom_gvars) = parse_cond(quantifier,condition,rs)
-    ir='/* Copyright (C) 2022 Omkar\n'
-    ir=ir + '* This benchmark is part of TOOL */\n\n'
-    ir=ir+'#include <pthread.h>\n'
+   
+    ir='#include <pthread.h>\n'
     ir=ir+'#include <stdatomic.h>\n'
     ir=ir+'#include <assert.h>\n\n'
+    ir=ir+'''void __VERIFIER_memory_scope_work_group()       ;
+void __VERIFIER_memory_scope_device()           ;
+void __VERIFIER_thread_global_id(int a)         ;
+void __VERIFIER_thread_local_id(int a)          ;
+void __VERIFIER_thread_group_id(int a)          ;
+void __VERIFIER_thread_kernel_id(int a)         ;
+void __VERIFIER_syncthread()                    ;
+void __VERIFIER_groupsize(int localWorkSize)    ;\n'''
 ##    for v in vs:
 ##        ir = ir+'atomic_int '+v+'; \n';
     ir = ir+'atomic_int vars['+str(len(varnumMap))+']; \n';  
@@ -656,4 +588,5 @@ if (len(sys.argv) != 2):
     print("Usage: {0} <LITMUS TEST>".format(sys.argv[0]))
     exit(1)
 
+# litc(sys.argv[1])
 print(litc(sys.argv[1]))
