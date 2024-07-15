@@ -97,7 +97,7 @@ void printResults(const std::shared_ptr<const Config> &conf,
 		llvm::outs() << " (" << res.exploredMoot << " mooted)";
 	}
 	if(res.racecount > 0 || !res.races.empty()){
-		llvm::outs() << "\nRaces Detected: " ;
+		llvm::outs() << "\nRaces Detected: ";
 		if(!res.races.empty())
 		for(auto it=res.races.begin() ; it != res.races.end() ; it++){
 			llvm::outs() << "\n\tL." << it->first;
@@ -105,7 +105,7 @@ void printResults(const std::shared_ptr<const Config> &conf,
 			
 		}
 	}
-	if(res.races.empty()){
+	if(res.racecount <= 0 && res.races.empty()){
 		llvm::outs() << "\nNo Race Detected: \n" ;
 	}
 	llvm::outs() << "\nTotal wall-clock time: "

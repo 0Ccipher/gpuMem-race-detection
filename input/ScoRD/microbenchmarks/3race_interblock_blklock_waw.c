@@ -7,8 +7,8 @@
 #include <limits.h>
 
 
-#define NBLOCKS 2
-#define NTHREADS 1
+#define NBLOCKS 3
+#define NTHREADS 2
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
@@ -130,6 +130,6 @@ int main(int argc, char **argv){
         pthread_join(workItems[i] , NULL);
     }
 
-	printf("_____________________________________\n");
+	// printf("_____________________________________\n");
   return 0;
 }

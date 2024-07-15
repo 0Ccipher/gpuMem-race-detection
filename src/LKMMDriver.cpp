@@ -1092,6 +1092,11 @@ Event LKMMDriver::findDataRaceForMemAccess(const MemAccessLabel *mLab)
 	return Event::getInitializer();
 }
 
+std::vector<Event> LKMMDriver::findDataRacesForMemAccess(const MemAccessLabel *mLab)
+{
+	return {};
+}
+
 void LKMMDriver::changeRf(Event read, Event store)
 {
 	auto &g = getGraph();

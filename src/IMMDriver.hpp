@@ -31,6 +31,7 @@ public:
 
 	void updateLabelViews(EventLabel *lab, const EventDeps *deps) override;
 	Event findDataRaceForMemAccess(const MemAccessLabel *mLab) override;
+	std::vector<Event> findDataRacesForMemAccess (const MemAccessLabel *mLab) override;
 	void changeRf(Event read, Event store) override;
 	void updateStart(Event create, Event start) override;
 	bool updateJoin(Event join, Event childLast) override;

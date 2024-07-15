@@ -422,6 +422,11 @@ Event IMMDriver::findDataRaceForMemAccess(const MemAccessLabel *mLab)
 	/* IMM does not define a concept of a race */
 	return Event::getInitializer();
 }
+std::vector<Event> IMMDriver::findDataRacesForMemAccess(const MemAccessLabel *mLab)
+{
+	/* IMM does not define a concept of a race */
+	return {};
+}
 
 void IMMDriver::changeRf(Event read, Event store)
 {

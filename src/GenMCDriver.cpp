@@ -1037,16 +1037,20 @@ void GenMCDriver::checkForDataRaces(const MemAccessLabel *lab)
 	if (getConf()->disableRaceDetection)
 		return;
 
-	auto racy = findDataRaceForMemAccess(lab);
+	// auto racy = findDataRaceForMemAccess(lab);
 
-	/* If a race is found and the execution is consistent, return it */
-	// if (!racy.isInitializer())
-	// 	visitError(lab->getPos(), Status::VS_RaceNotAtomic, "", racy);
-	/* If this is a new race then, store it to the result */
+	// /* If a race is found and the execution is consistent, return it */
+	// // if (!racy.isInitializer())
+	// // 	visitError(lab->getPos(), Status::VS_RaceNotAtomic, "", racy);
+	// /* If this is a new race then, store it to the result */
 
-	if(!racy.isInitializer()){
-		reportRace(lab->getPos(), racy);
-	}
+	// if(!racy.isInitializer()){
+	// 	reportRace(lab->getPos(), racy);
+	// }
+
+	auto races = findDataRacesForMemAccess(lab);
+	if(!races.empty())
+		reportRaces(lab->getPos(), races);
 	return;
 }
 
@@ -2348,7 +2352,10 @@ void GenMCDriver::reportRace(Event pos, Event confEvent /* = INIT */)
 	else{
 		e2 = confEvent;
 	}
-
+	string s1 = (llvm::isa<WriteLabel>(raceLab1))? "Wr":"Rd";
+	string s2 = (llvm::isa<WriteLabel>(raceLab2))? "Wr":"Rd";
+	WARN("Racey "+s1+"( " + to_string(pos.thread) + ","+ to_string(pos.index) + "), "+s2+"(" 
+		+ to_string(confEvent.thread)+ ","+ to_string(confEvent.index)+")\n");
 	/*Remember the race*/
 	auto &thr1 = getEE()->getThrById(e1.thread);
 	auto &thr2 = getEE()->getThrById(e2.thread);
@@ -2374,6 +2381,98 @@ void GenMCDriver::reportRace(Event pos, Event confEvent /* = INIT */)
 	}
 	
 	getEE()->restoreLocalState(std::move(oldState));
+}
+
+void GenMCDriver::reportRaces(Event pos, std::vector<Event> &races)
+{	
+	auto &g = getGraph();
+	auto &thr = getEE()->getCurThr();
+
+	/* If we have already detected an error, no need to report another */
+	if (isHalting())
+		return;
+
+	/* If this is a replay (might happen if one LLVM instruction
+	 * maps to many MC events), do not get into an infinite loop... */
+	if (inReplay())
+		return;
+
+	/* If the execution that led to the error is not consistent, block */
+	if (!isConsistent(ProgramPoint::step)) {
+		return;
+	}
+	if (inRecoveryMode() && !isRecoveryValid(ProgramPoint::step)) {
+		return;
+	}
+
+	const EventLabel *errLab = g.getEventLabel(pos);
+
+	/* If this is an invalid access, change the RF of the offending
+	 * event to BOTTOM, so that we do not try to get its value.
+	 * Don't bother updating the views */
+	if (isInvalidAccessError(Status::VS_OK) && llvm::isa<ReadLabel>(errLab))
+		g.changeRf(errLab->getPos(), Event::getBottom());
+
+	/* Print a basic error message and the graph.
+	 * We have to save the interpreter state as replaying will
+	 * destroy the current execution stack */
+	auto oldState = getEE()->releaseLocalState();
+
+	getEE()->replayExecutionBefore(getReplayView());
+
+	WARN("Racey ( " + to_string(pos.thread) + ","+ to_string(pos.index) + ")\n");
+	for(auto &confEvent : races){
+		const EventLabel *raceLab1 = g.getEventLabel(pos);
+		const EventLabel *raceLab2 = g.getEventLabel(confEvent);
+		Event e1;
+		Event e2;
+		if(llvm::isa<WriteLabel>(raceLab1) && g.isRMWStore(pos)){
+			e1 = g.getPreviousNonTrivial(pos);
+		}
+		else{
+			e1 = pos;
+		}
+		if(llvm::isa<WriteLabel>(raceLab2) && g.isRMWStore(confEvent)){
+			e2 = g.getPreviousNonTrivial(confEvent);
+		}
+		else{
+			e2 = confEvent;
+		}
+		string s1 = (llvm::isa<WriteLabel>(raceLab1))? "Wr":"Rd";
+		string s2 = (llvm::isa<WriteLabel>(raceLab2))? "Wr":"Rd";
+		WARN("Racey "+s1+"( " + to_string(pos.thread) + ","+ to_string(pos.index) + "), "+s2+"(" 
+			+ to_string(confEvent.thread)+ ","+ to_string(confEvent.index)+")\n");
+		/*Remember the race*/
+		auto &thr1 = getEE()->getThrById(e1.thread);
+		auto &thr2 = getEE()->getThrById(e2.thread);
+		if(!thr1.prefixLOC.empty() && !thr2.prefixLOC.empty()){
+			auto &pair1 = thr1.prefixLOC[e1.index];
+			auto &pair2 = thr2.prefixLOC[e2.index];
+			if(pair1.first && pair2.first) {
+				std::string f1 = pair1.second;
+				std::string f2 = pair1.second;
+				std::string inputFile = getConf()->inputFile;
+				Parser::stripSlashes(f1);
+				Parser::stripSlashes(f2);
+				Parser::stripSlashes(inputFile);
+				if (f1 != inputFile || f2 != inputFile)
+					return;
+				if(result.races.find(std::make_pair(pair1.first,pair2.first)) == result.races.end() 
+					&& result.races.find(std::make_pair(pair2.first,pair1.first)) == result.races.end()) {
+					result.races.insert(std::make_pair(pair1.first,pair2.first));
+					WARN("Report Race (L. " + to_string(pair1.first) + ", L." + to_string(pair2.first)+")\n");
+					++result.racecount;
+				}
+			}
+		}
+	}
+	
+	getEE()->restoreLocalState(std::move(oldState));
+
+	// llvm::raw_string_ostream out(result.message);
+	// out << "Error detected: " << Status::VS_RaceNotAtomic << "!\n";
+	// out << "Event " << errLab->getPos() << " ";
+	// halt(Status::VS_RaceNotAtomic);
 }
 
 void GenMCDriver::visitError(Event pos, Status s, const std::string &err /* = "" */,

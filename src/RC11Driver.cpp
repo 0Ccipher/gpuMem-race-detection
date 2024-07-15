@@ -371,11 +371,52 @@ bool RC11Driver::areInDataRace(const MemAccessLabel *aLab, const MemAccessLabel 
 	       llvm::dyn_cast<LockLabelLAPOR>(g.getEventLabel(bLock))->getLockAddr();
 }
 
+
+std::vector<Event> RC11Driver::findRacesForNewLoad(const ReadLabel *rLab)
+{
+	const auto &g = getGraph();
+	const View &before = g.getPreviousNonEmptyLabel(rLab)->getHbView();
+	std::vector<Event> races;
+	/* If there are not any events hb-before the read, there is nothing to do */
+	if (before.empty())
+		return {};
+
+	/* Check for events that race with the current load */
+	for (const auto &s : stores(g, rLab->getAddr())) {
+		if (before.contains(s))
+			continue;
+
+		auto *sLab = static_cast<const WriteLabel *>(g.getEventLabel(s));
+		if (areInDataRace(rLab, sLab))
+			races.push_back(sLab->getPos()); /* Race detected! */
+	}
+	return races; /* Race not found */
+}
+
+std::vector<Event> RC11Driver::findRacesForNewStore(const WriteLabel *wLab)
+{
+	const auto &g = getGraph();
+	auto &before = g.getPreviousNonEmptyLabel(wLab)->getHbView();
+	std::vector<Event> races;
+
+	for (auto i = 0u; i < g.getNumThreads(); i++) {
+		for (auto j = before[i] + 1u; j < g.getThreadSize(i); j++) {
+			const EventLabel *oLab = g.getEventLabel(Event(i, j));
+			if (!llvm::isa<MemAccessLabel>(oLab))
+				continue;
+
+			auto *mLab = static_cast<const MemAccessLabel *>(oLab);
+			if (areInDataRace(wLab, mLab))
+				races.push_back(mLab->getPos()); /* Race detected */
+		}
+	}
+	return races; /* Race not found */
+}
 Event RC11Driver::findRaceForNewLoad(const ReadLabel *rLab)
 {
 	const auto &g = getGraph();
 	const View &before = g.getPreviousNonEmptyLabel(rLab)->getHbView();
-
+	
 	/* If there are not any events hb-before the read, there is nothing to do */
 	if (before.empty())
 		return Event::getInitializer();
@@ -419,6 +460,16 @@ Event RC11Driver::findDataRaceForMemAccess(const MemAccessLabel *mLab)
 		return findRaceForNewStore(wLab);
 	BUG();
 	return Event::getInitializer();
+}
+
+std::vector<Event> RC11Driver::findDataRacesForMemAccess(const MemAccessLabel *mLab)
+{
+	if (auto *rLab = llvm::dyn_cast<ReadLabel>(mLab))
+		return findRacesForNewLoad(rLab);
+	else if (auto *wLab = llvm::dyn_cast<WriteLabel>(mLab))
+		return findRacesForNewStore(wLab);
+	BUG();
+	return {};
 }
 
 void RC11Driver::changeRf(Event read, Event store)

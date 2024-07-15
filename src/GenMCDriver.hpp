@@ -313,6 +313,7 @@ public:
 	void visitError(Event pos, Status r, const std::string &err = std::string(),
 			Event confEvent = Event::getInitializer());
 	void reportRace(Event pos, Event confEvent = Event::getInitializer());
+	void reportRaces(Event pos, std::vector<Event> &races);
 	/* Handle SyncThreads*/
 	void visitBarrierSync(std::unique_ptr<BarrierSyncLabel> lab);
 
@@ -740,6 +741,7 @@ private:
 	/* Checks for races after a load/store is added to the graph.
 	 * Should return the racy event, or INIT if no such event exists */
 	virtual Event findDataRaceForMemAccess(const MemAccessLabel *mLab) = 0;
+	virtual std::vector<Event> findDataRacesForMemAccess(const MemAccessLabel *mLab) = 0;
 
 	/* Returns an approximation of consistent rfs for RLAB.
 	 * The rfs are ordered according to CO */

@@ -31,6 +31,7 @@ public:
 
 	void updateLabelViews(EventLabel *lab, const EventDeps *deps) override;
 	Event findDataRaceForMemAccess(const MemAccessLabel *mLab) override;
+	std::vector<Event> findDataRacesForMemAccess(const MemAccessLabel *mLab) override;
 	void changeRf(Event read, Event store) override;
 	void updateStart(Event create, Event start) override;
 	bool updateJoin(Event join, Event childLast) override;
@@ -56,9 +57,11 @@ private:
 
 	/* Returns an event that is racy with rLab, or INIT if none is found */
 	Event findRaceForNewLoad(const ReadLabel *rLab);
+	std::vector<Event> findRacesForNewLoad(const ReadLabel *rLab);
 
 	/* Returns an event that is racy with wLab, or INIT if none is found */
 	Event findRaceForNewStore(const WriteLabel *wLab);
+	std::vector<Event> findRacesForNewStore(const WriteLabel *wLab);
 };
 
 #endif /* __RC11_MO_DRIVER_HPP__ */

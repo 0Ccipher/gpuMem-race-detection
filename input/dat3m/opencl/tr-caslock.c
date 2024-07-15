@@ -25,6 +25,7 @@ void __VERIFIER_thread__id(int a)         ;
 void __VERIFIER_thread_local_id(int a)          ;
 void __VERIFIER_thread_group_id(int a)          ;
 void __VERIFIER_thread_kernel_id(int a)         ;
+void __VERIFIER_thread_global_id(int global_id)     ;
 void __VERIFIER_syncthread()                    ;
 void __VERIFIER_groupsize(int localWorkSize)    ;
 
@@ -57,8 +58,8 @@ pthread_barrier_t barg[GROUPS];
 #endif
 
 atomic_int l=0;
-atomic_int x=0;
-atomic_int A[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int x=0;
+int A[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static void lock() {
       int e = 0;
@@ -68,8 +69,13 @@ static void lock() {
 #else
       __VERIFIER_memory_scope_device();
 #endif
-    while (atomic_compare_exchange_strong_explicit(&l, &e, 1, mo_lock, mo_lock) == 0) {
+    if (atomic_compare_exchange_strong_explicit(&l, &e, 1, mo_lock, mo_lock) == 0) {
         e = 0;
+//         #ifdef DV2WG
+//        __VERIFIER_memory_scope_work_group();
+// #else
+//       __VERIFIER_memory_scope_device();
+// #endif
     }
 }
 
@@ -83,28 +89,14 @@ static void unlock() {
 }
 
 void mutex_test(int global_id, int group_id, int local_id, int kernel_id) {
-    int a;
+    int a=0;
     lock();
-    #ifdef DV2WG
-       __VERIFIER_memory_scope_work_group();
-#else
-      __VERIFIER_memory_scope_device();
-#endif
     a = x;
-#ifdef DV2WG
-       __VERIFIER_memory_scope_work_group();
-#else
-      __VERIFIER_memory_scope_device();
-#endif
     x = a + 1;
     unlock();
-#ifdef DV2WG
-       __VERIFIER_memory_scope_work_group();
-#else
-      __VERIFIER_memory_scope_device();
-#endif
     A[global_id] = a;
 }
+
 void *kernel1( void *arg) {
     struct ThreadData *data = (struct ThreadData *)arg;
     int global_id = data->global_id;

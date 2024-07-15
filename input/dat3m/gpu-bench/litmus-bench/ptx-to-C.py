@@ -109,138 +109,91 @@ def ptx_addi(reg_init,toks):
     reg_init[toks[1]] = tgt
     return '  int '+tgt+' = '+left+' + '+right+';\n'
 
-def ptx_mullw(reg_init,toks):
-    tgt=get_fresh_reg(toks[1])
-    if toks[2] in reg_init:
-        left=reg_init[toks[2]]
-    else:
-        left='0'
-    if toks[3] in reg_init:
-        #right=reg_init[toks[3]][4:]
-        right=reg_init[toks[3]]
-    else:
-        right='0'
-    reg_init[toks[1]] = tgt
-    return '  int '+tgt+' = '+left+' * '+right+';\n'
-
-def ptx_divw(reg_init,toks):
-    tgt=get_fresh_reg(toks[1])
-    if toks[2] in reg_init:
-        left=reg_init[toks[2]]
-    else:
-        left='0'
-    if toks[3] in reg_init:
-        right=reg_init[toks[3]]
-    else:
-        right='0'
-    reg_init[toks[1]] = tgt
-    return '  int '+tgt+' = '+left+' / '+right+';\n'
-
-def ptx_cmpw(reg_init,toks):
-    if toks[1] in reg_init:
-        left=reg_init[toks[1]]
-    else:
-        left='0'
-    if toks[2] in reg_init:
-        #right=reg_init[toks[2]][4:]
-        right=reg_init[toks[2]]
-    else:
-        right='0'
-    cmpr=get_fresh_reg('cmpeq')
-    reg_init[('cmp','eq')] = cmpr
-    return '  int '+cmpr+' = ('+left+' == '+right+');\n'
-
-def ptx_cmpwi(reg_init,toks):
-    if toks[1] in reg_init:
-        left=reg_init[toks[1]]
-    else:
-        left='0'
-    right=str(int(toks[2]))
-    cmpr=get_fresh_reg('cmpeq')
-    reg_init[('cmp','eq')] = cmpr
-    return '  int '+cmpr+' = ('+left+' == '+right+');\n'
-
 def ptx_beq(pc,reg_init,labels,toks):
-    if not(('cmp','eq') in reg_init):
-        raise Exception('Branching without preceding comparison!')
-    lbl1='lbl_'+toks[1]
-    assert((pc+1) in labels)
-    lbl2=''+labels[pc+1]
-    return '  if ('+reg_init[('cmp','eq')]+')  goto '+lbl1+'; else goto '+lbl2+';\n'
+    if toks[1] in reg_init:
+        op1=reg_init[toks[1]]
+    else:
+        op1='0'
+    if toks[2] in reg_init:
+        #op2=reg_init[toks[3]][4:] # remove type
+        op2=reg_init[toks[2]]
+    else:
+        op2='0'
+    lbl1='lbl_'+toks[3]
+    # assert((pc+1) in labels)
+    # lbl2=''+labels[pc+1]
+    # return '  if ('+op1+'=='+op2+')  goto '+lbl1+'; else goto '+lbl2+';\n'
+    return '  if ('+op1+'=='+op2+')  goto '+lbl1+';\n'
 
 def ptx_bne(pc,reg_init,labels,toks):
-    if not(('cmp','eq') in reg_init):
-        raise Exception('Branching without preceding comparison!')
+    if toks[1] in reg_init:
+        op1=reg_init[toks[1]]
+    else:
+        op1='0'
+    if toks[2] in reg_init:
+        #op2=reg_init[toks[3]][4:] # remove type
+        op2=reg_init[toks[2]]
+    else:
+        op2='0'
+    lbl1='lbl_'+toks[3]
+    # assert((pc+1) in labels)
+    # lbl2=''+labels[pc+1]
+    # return '  if ('+op1+'=='+op2+')  goto '+lbl2+'; else goto '+lbl1+';\n'
+    return '  if ('+op1+'!='+op2+')  goto '+lbl1+';\n'
+
+def ptx_goto(pc,reg_init,labels,toks):
     lbl1='lbl_'+toks[1]
-    assert((pc+1) in labels)
-    lbl2=''+labels[pc+1]
-    return '  if ('+reg_init[('cmp','eq')]+')  goto '+lbl2+'; else goto '+lbl1+';\n'
+    return '  goto '+lbl1+';\n'
 
 def ptx_li(reg_init,toks):
     reg_init[toks[1]] = toks[2]
     return ''
 
-def ptx_mr(reg_init,toks):
-    if toks[2] in reg_init:
-        reg_init[toks[1]] = reg_init[toks[2]]
+
+def get_scope(inst):
+    r = ''
+    if 'gpu' in inst:
+        r = r + '__VERIFIER_memory_scope_device();\n'
+    elif 'cta' in inst:
+        r = r + '__VERIFIER_memory_scope_work_group();\n'
     else:
-        reg_init[toks[1]] = '0'
-    return ''
+        raise Exception("The benchmark is containing some unsupported scope operations.")
+    return r
 
-def ptx_xor(reg_init,toks):
-    tgt_reg = get_fresh_reg(toks[1])
-    if toks[2] in reg_init:
-        op1=reg_init[toks[2]]
+def get_mem_order(inst):
+    r=''
+    if 'acquire' in inst:
+        r='memory_order_acquire'
+    elif 'relaxed' in inst:
+        r = 'memory_order_relaxed'
+    elif 'acr_rel' in inst:
+        r = 'memory_order_acq_rel'
+    elif 'release' in inst:
+       r= 'memory_order_release'
+    elif 'sc' in inst:
+        r = 'memory_order_seq_cst'
     else:
-        op1='0'
-    if toks[3] in reg_init:
-        #op2=reg_init[toks[3]][4:] # remove type
-        op2=reg_init[toks[3]]
-    else:
-        op2='0'
-    reg_init[toks[1]] = tgt_reg
-    return '  int '+tgt_reg+' = '+op1+' ^ '+op2+';\n'
+        raise Exception("The benchmark is containing some unsupported memory order.")
+    return r
 
-def ptx_andi(reg_init,toks):
-    tgt_reg = get_fresh_reg(toks[1])
-    if toks[2] in reg_init:
-        op1=reg_init[toks[2]]
-    else:
-        op1='0'
-    op2=str(int(toks[3]))
-    reg_init[toks[1]] = tgt_reg
-    return '  int '+tgt_reg+' = '+op1+' & '+op2+';\n'
-
-    
-
-# def ptx_sync(reg_init,toks):
-#     return '  atomic_fetch_add_explicit(&__fence_var, 0, memory_order_acq_rel);\n'
-
-
-def ptx_ld_acquire_dv(reg_init, toks):
+def ptx_ld_weak(reg_init, toks):
     # print('ptx_ld_acquire_dv',reg_init, toks)
     tmp_reg=get_fresh_reg()
     tgt_reg = get_fresh_reg(toks[1])
-    # if toks[2] != '0':
-    #     raise Exception('Non-zero offset in ld.acquire.gpu: {0}'.format(toks[2]))
-    # varName = None
-    # if len(toks) == 3:
     varName = 'var_'+toks[2]
     if varName in varnumMap:
         addr = 'vars['+str(varnumMap[varName])+']'
-    # if toks[3] in reg_init:
-    #     addr = reg_init[toks[3]]
-    # else:
-    #     raise Exception('Uninitialized address used in ld.acquire.gpu: {0}'.format(toks[3]))
+    else:
+        raise Exception('Uninitialized address used in ld: {0}'.format(toks[2]))
     reg_init[toks[1]] = tgt_reg
     if addr.startswith('vars['): 
-        r = '  __VERIFIER_memory_scope_device();\n'
-        r =r +  '  int '+tgt_reg+' = atomic_load_explicit(&'+addr+', memory_order_acquire);\n'
+        r = '__VERIFIER_memory_weak_access();\n'
+        r =r +  '  int '+tgt_reg+' = atomic_load_explicit(&'+addr+', memory_order_relaxed);\n'
         return r
     else:
         raise Exception("The benchmark is containing some unsupported address operations.")
 
-def ptx_st_release_dv(reg_init,toks):
+def ptx_st_weak(reg_init,toks):
     # print('ptx_st_release_dv',reg_init, toks)
     varName = 'var_'+toks[1]
     if varName in varnumMap:
@@ -251,11 +204,50 @@ def ptx_st_release_dv(reg_init,toks):
         # value is register or variable:TODO
         print(val)
     if addr.startswith('vars['):
-        r = '  __VERIFIER_memory_scope_device();\n'
-        r = r +  '  atomic_store_explicit(&'+addr+', '+val+', memory_order_release);\n'
+        r = '__VERIFIER_memory_weak_access();\n'
+        r = r +  '  atomic_store_explicit(&'+addr+', '+val+', memory_order_relaxed);\n'
         return r
     else:
         raise Exception("The benchmark is containing some unsupported address operations.")
+    
+def ptx_ld_(reg_init, toks):
+    # print('ptx_ld_acquire_dv',reg_init, toks)
+    tmp_reg=get_fresh_reg()
+    tgt_reg = get_fresh_reg(toks[1])
+    varName = 'var_'+toks[2]
+    if varName in varnumMap:
+        addr = 'vars['+str(varnumMap[varName])+']'
+    else:
+        raise Exception('Uninitialized address used in ld: {0}'.format(toks[2]))
+    reg_init[toks[1]] = tgt_reg
+    r = get_scope(toks[0])
+    memorder = get_mem_order(toks[0])
+    if addr.startswith('vars['): 
+        r =r +  '  int '+tgt_reg+' = atomic_load_explicit(&'+addr+', '+memorder+');\n'
+        return r
+    else:
+        raise Exception("The benchmark is containing some unsupported address operations.")
+
+
+def ptx_st_(reg_init,toks):
+    # print('ptx_st_release_dv',reg_init, toks)
+    varName = 'var_'+toks[1]
+    if varName in varnumMap:
+        addr = 'vars['+str(varnumMap[varName])+']'
+    try:
+        val = str(int(toks[2]))
+    except ValueError:
+        # value is register or variable:TODO
+        print(val)
+    r = get_scope(toks[0])
+    memorder = get_mem_order(toks[0])
+    if addr.startswith('vars['):
+        r = r +  '  atomic_store_explicit(&'+addr+', '+val+', '+memorder+');\n'
+        return r
+    else:
+        raise Exception("The benchmark is containing some unsupported address operations.")
+
+
 
 def ptx_thr_data(thr_data):
     pattern = r'\s*P\d+@cta\s*(\d+),\s*gpu\s(\d+)\s*'
@@ -269,6 +261,111 @@ def ptx_thr_data(thr_data):
         print('None')
         raise Exception("The benchmark is containing some unsupported @cta , gpu info ")
     
+def ptx_add_(reg_init,toks):
+    varName = 'var_'+toks[2]
+    if varName in varnumMap:
+        addr = 'vars['+str(varnumMap[varName])+']'
+    try:
+        val = str(int(toks[3]))
+    except ValueError:
+        # value is register or variable:TODO
+        print(val)
+    tgt_reg = get_fresh_reg(toks[1])
+    reg_init[toks[1]] = tgt_reg
+    r = get_scope(toks[0])
+    memorder = get_mem_order(toks[0])
+    if addr.startswith('vars['): 
+        r =r +  '  int '+tgt_reg+' = atomic_fetch_add_explicit(&'+addr+', '+val+', '+memorder+');\n'
+        return r
+    else:
+        raise Exception("The benchmark is containing some unsupported address operations.")
+    
+def ptx_sub_(reg_init,toks):
+    varName = 'var_'+toks[2]
+    if varName in varnumMap:
+        addr = 'vars['+str(varnumMap[varName])+']'
+    try:
+        val = str(int(toks[3]))
+    except ValueError:
+        # value is register or variable:TODO
+        print(val)
+    tgt_reg = get_fresh_reg(toks[1])
+    reg_init[toks[1]] = tgt_reg
+    r = get_scope(toks[0])
+    memorder = get_mem_order(toks[0])
+    if addr.startswith('vars['): 
+        r =r +  '  int '+tgt_reg+' = atomic_fetch_sub_explicit(&'+addr+', '+val+', '+memorder+');\n'
+        return r
+    else:
+        raise Exception("The benchmark is containing some unsupported address operations.")
+    
+def ptx_acqrel_cas(reg_init,toks):
+    varName = 'var_'+toks[2]
+    if varName in varnumMap:
+        addr = 'vars['+str(varnumMap[varName])+']'
+    try:
+        val = str(int(toks[4]))
+    except ValueError:
+        # value is register or variable:TODO
+        print(val)
+    try:
+        exp = str(int(toks[3]))
+    except ValueError:
+        # value is register or variable:TODO
+        print(exp)
+    tgt_reg = get_fresh_reg(toks[1])
+    tmp_reg = get_fresh_reg()
+    r = '  int '+tmp_reg+' = '+exp+';\n'
+    reg_init[toks[1]] = tgt_reg
+    r = r + get_scope(toks[0])
+    if addr.startswith('vars['): 
+        r =r +  '  int '+tgt_reg+' = atomic_compare_exchange_strong_explicit((&'+addr+ ',&'+tmp_reg+', '+val+',memory_order_acq_rel);\n'
+        return r
+    else:
+        raise Exception("The benchmark is containing some unsupported address operations.")
+
+def ptx_acqrel_exch(reg_init,toks):
+    varName = 'var_'+toks[2]
+    if varName in varnumMap:
+        addr = 'vars['+str(varnumMap[varName])+']'
+    try:
+        val = str(int(toks[3]))
+    except ValueError:
+        # value is register or variable:TODO
+        print(val)
+    tgt_reg = get_fresh_reg(toks[1])
+    reg_init[toks[1]] = tgt_reg
+    r = get_scope(toks[0])
+    if addr.startswith('vars['): 
+        r =r +  '  int '+tgt_reg+' = atomic_exchange_explicit(&'+addr+', '+val+', memory_order_acq_rel);\n'
+        return r
+    else:
+        raise Exception("The benchmark is containing some unsupported address operations.")
+    
+# def ptx_bar_sync(reg_init,toks):
+#     varName = 'var_'+toks[2]
+#     if varName in varnumMap:
+#         addr = 'vars['+str(varnumMap[varName])+']'
+#     try:
+#         val = str(int(toks[3]))
+#     except ValueError:
+#         # value is register or variable:TODO
+#         print(val)
+#     tgt_reg = get_fresh_reg(toks[1])
+#     reg_init[toks[1]] = tgt_reg
+#     r = get_scope(toks[0])
+#     if addr.startswith('vars['): 
+#         r =r +  '  int '+tgt_reg+' = atomic_exchange_explicit(&'+addr+', '+val+', memory_order_acq_rel);\n'
+#         return r
+#     else:
+#         raise Exception("The benchmark is containing some unsupported address operations.")
+
+def ptx_fence(reg_init,toks):
+    r = get_scope(toks[0])
+    memorder = get_mem_order(toks[0])
+    r =r +  '  atomic_thread_fence('+memorder+');\n'
+    return r
+
 
 def instrs_to_c(reg_init,instrs,arch):
     # First find all defined labels
@@ -353,26 +450,67 @@ def instrs_to_c(reg_init,instrs,arch):
             toks = instr.split()
             did_branch=False
             if arch == 'PTX':
-                if toks[0] == 'addi': src = src+ptx_addi(regs,toks)
-                elif toks[0] == 'andi.': src = src+ptx_andi(regs,toks)
+                if toks[0] == 'add': src = src+ptx_addi(regs,toks)
                 elif toks[0] == 'beq': src = src+ptx_beq(pc,regs,labels,toks); did_branch=True
                 elif toks[0] == 'bne': src = src+ptx_bne(pc,regs,labels,toks); did_branch=True
-                elif toks[0] == 'cmpw': src = src+ptx_cmpw(regs,toks)
-                elif toks[0] == 'cmpwi': src = src+ptx_cmpwi(regs,toks)
-                elif toks[0] == 'divw': src = src+ptx_divw(regs,toks)
+                elif toks[0] == 'goto': src = src+ptx_goto(pc,regs,labels,toks); did_branch=True
+                # loads
+                elif 'ld.acquire.' in toks[0]: src = src+ptx_ld_(regs,toks)
+                elif 'ld.relaxed.' in toks[0]: src = src+ptx_ld_(regs,toks)
+                # elif toks[0] == 'ld.acquire.sys': src = src+ptx_ld_acquire_sys(regs,toks)
+                # elif toks[0] == 'ld.relaxed.sys': src = src+ptx_ld_relaxed_sys(regs,toks)
+                # elif toks[0] == 'ld.acquire.cta': src = src+ptx_ld_acquire_cta(regs,toks)
+                # elif toks[0] == 'ld.relaxed.cta': src = src+ptx_ld_relaxed_cta(regs,toks)
+                elif toks[0] == 'ld.weak': src = src+ptx_ld_weak(regs,toks)
+                # load to register
+                elif toks[0] == 'ld': src = src+ptx_li(regs,toks)
                 elif toks[0] == 'li': src = src+ptx_li(regs,toks)
-                elif toks[0] == 'ld.acquire.gpu': src = src+ptx_ld_acquire_dv(regs,toks)
-                elif toks[0] == 'st.release.gpu': src = src+ptx_st_release_dv(regs,toks)
-                elif toks[0] == 'mr': src = src+ptx_mr(regs,toks)
-                elif toks[0] == 'mullw': src = src+ptx_mullw(regs,toks)
-                # elif toks[0] == 'sync': src = src+ptx_sync(regs,toks)
-                elif toks[0] == 'xor': src = src+ptx_xor(regs,toks)
+
+                
+                # stores
+                elif 'st.release.' in toks[0]: src = src+ptx_st_(regs,toks)
+                elif 'st.relaxed.' in toks[0]: src = src+ptx_st_(regs,toks)
+                # elif toks[0] == 'st.release.sys': src = src+ptx_st_release_sys(regs,toks)
+                # elif toks[0] == 'st.relaxed.sys': src = src+ptx_st_relaxed_sys(regs,toks)
+                # elif toks[0] == 'st.release.cta': src = src+ptx_st_release_cta(regs,toks)
+                # elif toks[0] == 'st.relaxed.cta': src = src+ptx_st_relaxed_cta(regs,toks)
+                elif toks[0] == 'st.weak': src = src+ptx_st_weak(regs,toks)
+                
+                # atomic functions
+                elif toks[0] == 'atom.acq_rel.gpu.add' : src = src+ptx_add_(regs,toks)
+                elif toks[0] == 'atom.acq_rel.cta.add' : src = src+ptx_add_(regs,toks)
+                elif toks[0] == 'atom.acquire.gpu.add' : src = src+ptx_add_(regs,toks)
+                elif toks[0] == 'atom.acquire.cta.add' : src = src+ptx_add_(regs,toks)
+                elif toks[0] == 'atom.release.gpu.add' : src = src+ptx_add_(regs,toks)
+                # elif toks[0] == 'red.acq_rel.gpu.add' : src = src+ptx_red_acqrel_add_gpu(regs,toks)
+                elif toks[0] == 'atom.acq_rel.gpu.sub' : src = src+ptx_sub_(regs,toks)
+                elif toks[0] == 'atom.acq_rel.cta.sub' : src = src+ptx_sub_(regs,toks)
+                # elif toks[0] == 'red.acq_rel.gpu.sub' : src = src+ptx_red_acqrel_sub_gpu(regs,toks)
+                elif toks[0] == 'atom.acq_rel.gpu.cas' : src = src+ptx_acqrel_cas(regs,toks)
+                elif toks[0] == 'atom.acq_rel.cta.cas' : src = src+ptx_acqrel_cas(regs,toks)
+                # elif toks[0] == 'red.acq_rel.gpu.cas' : src = src+ptx_red_acqrel_cas_gpu(regs,toks)
+                elif toks[0] == 'atom.acq_rel.gpu.exch' : src = src+ptx_acqrel_exch(regs,toks)
+                elif toks[0] == 'atom.acq_rel.cta.exch' : src = src+ptx_acqrel_exch(regs,toks)
+                # elif toks[0] == 'red.acq_rel.gpu.exch' : src = src+ptx_red_acqrel_exch_gpu(regs,toks)
+                
+                # # barriers
+                # elif toks[0] == 'bar.cta.sync' : src = src+ptx_bar_sync(regs,toks)
+                # elif toks[0] == 'bar.cta.arrive' : src = src+ptx_bar_arrive(regs,toks)
+                
+                # #fence
+                elif 'fence.sc' in toks[0] : src = src+ptx_fence(regs,toks)
+                # elif toks[0] == 'fence.sc.gpu' : src = src+ptx_fence.sc.gpu(regs,toks)
+                # elif toks[0] == 'fence.sc.cta' : src = src+ptx_fence.sc.cta(regs,toks)
+                elif 'fence.acq_rel' in toks[0] : src = src+ptx_fence(regs,toks)
+                # elif toks[0] == 'fence.acq_rel.gpu' : src = src+ptx_fence.acq_rel.gpu(regs,toks)
+                # elif toks[0] == 'fence.acq_rel.cta' : src = src+ptx_fence.acq_rel.cta(regs,toks)
+                
                 elif re.fullmatch(r'\s*P\d+@cta\s*\d+,\s*gpu\s\d+\s*',instrs[pc]): src=src+ptx_thr_data(instrs[pc])
                 else:
                     raise Exception('Unknown assembly mnemonic: '+toks[0])
             pc=pc+1
-        if not(did_branch) and (i+1<len(BBs)):
-            src=src+'  goto label '+BBs[i+1]['lbl']+';\n'
+        # if not(did_branch) and (i+1<len(BBs)):
+        #     src=src+'  goto label '+BBs[i+1]['lbl']+';\n'
     reg_init.clear()
     for r in BBs[-1]['regs']:
         reg_init[r]=BBs[-1]['regs'][r]
@@ -393,6 +531,11 @@ def parse_code(reg_init,common_reg_init,code,arch):
     return c_codes
 
 def get_atom_gvar(pid,reg,val):
+    match = re.match(r'P(\d+):(.+)',val)
+    if match:
+        proc = match.group(1)
+        treg = match.group(2)
+        val = ''+proc+"_"+treg
     return 'atom_'+str(pid)+'_'+reg+'_'+val
 
 def eval_cond(cond,atoms):
@@ -451,7 +594,6 @@ def parse_cond(quantifier,cond,reg_init):
     main_check=''
     sub_checks=[]
     atoms=[]
-
     (code,condreg,rest) = eval_cond(cond,atoms)
     main_check=code
     if quantifier=='exists':
@@ -470,12 +612,18 @@ def parse_cond(quantifier,cond,reg_init):
             actval=' 0'
     #    print('val\n')
  #       print(val)
-        try:
-            cmpval=str(int(val))
-        except: # variable address
-##            varName = 'var_'+val
-##            cmpval = '  atomic_load_explicit(&vars['+str(varnumMap[varName])+'], memory_order_acquire)'
-            raise Exception("The benchmark is containing some unsupported address operations.")
+        match = re.match(r'P(\d+):(.+)',val)
+        if match:
+            proc = match.group(1)
+            treg = match.group(2)
+            cmpval=reg_init[int(proc)][treg]
+        else:
+            try:
+                cmpval=str(int(val))
+            except: # variable address
+        ##            varName = 'var_'+val
+        ##            cmpval = '  atomic_load_explicit(&vars['+str(varnumMap[varName])+'], memory_order_acquire)'
+                raise Exception("The benchmark is containing some unsupported address operations.")
         tmp = get_fresh_reg()
         sub_checks[pid] = sub_checks[pid]+'  int '+tmp+' = ('+actval+' == '+cmpval+');\n'
         sub_checks[pid] = sub_checks[pid]+'  atomic_store_explicit(&'+get_atom_gvar(pid,reg,val)+', '+tmp+', memory_order_release);\n'
@@ -544,7 +692,6 @@ void __VERIFIER_groupsize(int localWorkSize)    ;\n'''
     for v in atom_gvars:
         ir = ir+'atomic_int '+v+'; \n'
     ir=ir+'\n'
-    ir=ir+'atomic_int __fence_var;\n'
     ir=ir+'\n'
     
     pid=0
