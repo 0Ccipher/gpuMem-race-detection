@@ -1220,7 +1220,7 @@ void GenMCDriver::checkLiveness()
 
 	if (spinBlocked.empty())
 		return;
-
+	WARN("Checking liveness\n");
 	/* And check whether all of them are live or not */
 	auto nonTermTID = 0u;
 	if (std::all_of(spinBlocked.begin(), spinBlocked.end(), [&](int tid){

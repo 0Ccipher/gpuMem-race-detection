@@ -118,7 +118,11 @@ def ptx_beq(pc,reg_init,labels,toks):
         #op2=reg_init[toks[3]][4:] # remove type
         op2=reg_init[toks[2]]
     else:
-        op2='0'
+        try:
+            op2 = str(int(toks[2]))
+        except ValueError:
+            # value is register or variable:TODO
+            print(op2)
     lbl1='lbl_'+toks[3]
     # assert((pc+1) in labels)
     # lbl2=''+labels[pc+1]
@@ -134,7 +138,11 @@ def ptx_bne(pc,reg_init,labels,toks):
         #op2=reg_init[toks[3]][4:] # remove type
         op2=reg_init[toks[2]]
     else:
-        op2='0'
+        try:
+            op2 = str(int(toks[2]))
+        except ValueError:
+            # value is register or variable:TODO
+            print(op2)
     lbl1='lbl_'+toks[3]
     # assert((pc+1) in labels)
     # lbl2=''+labels[pc+1]
@@ -299,7 +307,7 @@ def ptx_sub_(reg_init,toks):
     else:
         raise Exception("The benchmark is containing some unsupported address operations.")
     
-def ptx_acqrel_cas(reg_init,toks):
+def ptx_cas(reg_init,toks):
     varName = 'var_'+toks[2]
     if varName in varnumMap:
         addr = 'vars['+str(varnumMap[varName])+']'
@@ -318,13 +326,14 @@ def ptx_acqrel_cas(reg_init,toks):
     r = '  int '+tmp_reg+' = '+exp+';\n'
     reg_init[toks[1]] = tgt_reg
     r = r + get_scope(toks[0])
+    memorder = get_mem_order(toks[0])
     if addr.startswith('vars['): 
-        r =r +  '  int '+tgt_reg+' = atomic_compare_exchange_strong_explicit((&'+addr+ ',&'+tmp_reg+', '+val+',memory_order_acq_rel);\n'
+        r =r +  '  int '+tgt_reg+' = atomic_compare_exchange_strong_explicit((&'+addr+ ',&'+tmp_reg+', '+val+','+memorder+');\n'
         return r
     else:
         raise Exception("The benchmark is containing some unsupported address operations.")
 
-def ptx_acqrel_exch(reg_init,toks):
+def ptx_exch(reg_init,toks):
     varName = 'var_'+toks[2]
     if varName in varnumMap:
         addr = 'vars['+str(varnumMap[varName])+']'
@@ -336,8 +345,9 @@ def ptx_acqrel_exch(reg_init,toks):
     tgt_reg = get_fresh_reg(toks[1])
     reg_init[toks[1]] = tgt_reg
     r = get_scope(toks[0])
+    memorder = get_mem_order(toks[0])
     if addr.startswith('vars['): 
-        r =r +  '  int '+tgt_reg+' = atomic_exchange_explicit(&'+addr+', '+val+', memory_order_acq_rel);\n'
+        r =r +  '  int '+tgt_reg+' = atomic_exchange_explicit(&'+addr+', '+val+', '+memorder+');\n'
         return r
     else:
         raise Exception("The benchmark is containing some unsupported address operations.")
@@ -482,15 +492,20 @@ def instrs_to_c(reg_init,instrs,arch):
                 elif toks[0] == 'atom.acquire.gpu.add' : src = src+ptx_add_(regs,toks)
                 elif toks[0] == 'atom.acquire.cta.add' : src = src+ptx_add_(regs,toks)
                 elif toks[0] == 'atom.release.gpu.add' : src = src+ptx_add_(regs,toks)
+                elif toks[0] == 'atom.relaxed.gpu.add' : src = src+ptx_add_(regs,toks)
                 # elif toks[0] == 'red.acq_rel.gpu.add' : src = src+ptx_red_acqrel_add_gpu(regs,toks)
                 elif toks[0] == 'atom.acq_rel.gpu.sub' : src = src+ptx_sub_(regs,toks)
                 elif toks[0] == 'atom.acq_rel.cta.sub' : src = src+ptx_sub_(regs,toks)
                 # elif toks[0] == 'red.acq_rel.gpu.sub' : src = src+ptx_red_acqrel_sub_gpu(regs,toks)
-                elif toks[0] == 'atom.acq_rel.gpu.cas' : src = src+ptx_acqrel_cas(regs,toks)
-                elif toks[0] == 'atom.acq_rel.cta.cas' : src = src+ptx_acqrel_cas(regs,toks)
+                elif toks[0] == 'atom.acq_rel.gpu.cas' : src = src+ptx_cas(regs,toks)
+                elif toks[0] == 'atom.acq_rel.cta.cas' : src = src+ptx_cas(regs,toks)
+                elif toks[0] == 'atom.relaxed.gpu.cas' : src = src+ptx_cas(regs,toks)
+                elif toks[0] == 'atom.relaxed.cta.cas' : src = src+ptx_cas(regs,toks)
                 # elif toks[0] == 'red.acq_rel.gpu.cas' : src = src+ptx_red_acqrel_cas_gpu(regs,toks)
-                elif toks[0] == 'atom.acq_rel.gpu.exch' : src = src+ptx_acqrel_exch(regs,toks)
-                elif toks[0] == 'atom.acq_rel.cta.exch' : src = src+ptx_acqrel_exch(regs,toks)
+                elif toks[0] == 'atom.acq_rel.gpu.exch' : src = src+ptx_exch(regs,toks)
+                elif toks[0] == 'atom.acq_rel.cta.exch' : src = src+ptx_exch(regs,toks)
+                elif toks[0] == 'atom.relaxed.gpu.exch' : src = src+ptx_exch(regs,toks)
+                elif toks[0] == 'atom.relaxed.cta.exch' : src = src+ptx_exch(regs,toks)
                 # elif toks[0] == 'red.acq_rel.gpu.exch' : src = src+ptx_red_acqrel_exch_gpu(regs,toks)
                 
                 # # barriers
@@ -540,6 +555,10 @@ def get_atom_gvar(pid,reg,val):
 
 def eval_cond(cond,atoms):
     cond = cond.strip()
+    if cond == '0==0':
+        condreg = get_fresh_reg()
+        code = '  int '+condreg+' = (0 == 0);\n'
+        return (code,condreg,'')
     if len(cond) == 0: raise Exception('Failed to parse condition.')
     if cond[0] == '(':
         cond = cond[1:]
@@ -621,8 +640,8 @@ def parse_cond(quantifier,cond,reg_init):
             try:
                 cmpval=str(int(val))
             except: # variable address
-        ##            varName = 'var_'+val
-        ##            cmpval = '  atomic_load_explicit(&vars['+str(varnumMap[varName])+'], memory_order_acquire)'
+                # varName = 'var_'+val
+                # cmpval = '  atomic_load_explicit(&vars['+str(varnumMap[varName])+'], memory_order_acquire)'
                 raise Exception("The benchmark is containing some unsupported address operations.")
         tmp = get_fresh_reg()
         sub_checks[pid] = sub_checks[pid]+'  int '+tmp+' = ('+actval+' == '+cmpval+');\n'
