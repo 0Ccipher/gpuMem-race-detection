@@ -78,15 +78,18 @@ const std::unordered_map<std::string, InternalFunctions> internalFunNames = {
 	{"_Znwm", InternalFunctions::FN_Malloc},
 	{"_ZdlPv", InternalFunctions::FN_Free},
 
-	// Aniket
+	// 
 	{"__VERIFIER_memory_scope_device", InternalFunctions::FN_memory_scope_device},
 	{"__VERIFIER_memory_scope_work_group", InternalFunctions::FN_memory_scope_work_group},
+	{"__VERIFIER_memory_scope_system", InternalFunctions::FN_memory_scope_system},
 	{"__VERIFIER_thread_global_id", InternalFunctions::FN_thread_global_id},
 	{"__VERIFIER_thread_local_id", InternalFunctions::FN_thread_local_id},
 	{"__VERIFIER_thread_group_id", InternalFunctions::FN_thread_group_id},
 	{"__VERIFIER_thread_kernel_id", InternalFunctions::FN_thread_kernel_id},
 	{"__VERIFIER_syncthread", InternalFunctions::FN_syncthread},
 	{"__VERIFIER_groupsize", InternalFunctions::FN_groupsize},
+	{"__VERIFIER_weak_access", InternalFunctions::FN_weak_access},
+	{"__VERIFIER_ret_CAS", InternalFunctions::FN_ret_CAS},
 
 };
 

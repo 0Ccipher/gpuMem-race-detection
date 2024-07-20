@@ -1,0 +1,1429 @@
+
+______________________________________________________________________________________________
+PTX RWC_uniproc
+
+"CoRR"
+
+"https://github.com/johnwickerson/memalloy/blob/master/ptx_testing/RWC_uniproc/RWC_uniproc.litmus"
+
+{
+
+P0:r0=0;
+
+P1:r0=0;
+
+P1:r2=0;
+
+P2:r0=0;
+
+P2:r2=0;
+
+x=0;
+
+}
+
+ P0@cta 0,gpu 0           | P1@cta 1,gpu 0           | P2@cta 1,gpu 0           ;
+
+ ld r0, 1                 | ld.weak r0, x            | ld r0, 2                 ;
+
+ st.weak x, r0            | fence.sc.cta             | st.weak x, r0            ;
+
+                          | ld.weak r2, x            | fence.sc.gpu             ;
+
+                          |                          | ld.weak r2, x            ;
+
+exists
+
+(P1:r0 == 1 /\ P1:r2 == 0 /\ P2:r2 == 2 /\ x == 1)
+{'Memalloy/RWC_uniproc'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX IRRWIW_uniproc
+
+"CoRR"
+
+"https://github.com/johnwickerson/memalloy/blob/master/ptx_testing/IRRWIW_uniproc/IRRWIW_uniproc.litmus"
+
+{
+
+P0:r0=0;
+
+P1:r0=0;
+
+P1:r2=0;
+
+P2:r0=0;
+
+P3:r0=0;
+
+P3:r2=0;
+
+x=0;
+
+}
+
+ P0@cta 0,gpu 0           | P1@cta 1,gpu 0           | P2@cta 1,gpu 0           | P3@cta 1,gpu 0           ;
+
+ ld r0, 1                 | ld.weak r0, x            | ld r0, 2                 | ld r2, 3                 ;
+
+ st.weak x, r0            | fence.sc.cta             | st.weak x, r0            | ld.weak r0, x            ;
+
+                          | ld.weak r2, x            |                          | fence.sc.gpu             ;
+
+                          |                          |                          | st.weak x, r2            ;
+
+exists
+
+(P1:r0 == 1 /\ P1:r2 == 0 /\ P3:r0 == 2 /\ x == 1)
+{'Memalloy/IRRWIW_uniproc'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX IRIW_uniproc
+
+"CoRR"
+
+"https://github.com/johnwickerson/memalloy/blob/master/ptx_testing/IRIW_uniproc/IRIW_uniproc.litmus"
+
+{
+
+P0:r0=0;
+
+P1:r0=0;
+
+P1:r2=0;
+
+P2:r0=0;
+
+P3:r0=0;
+
+P3:r2=0;
+
+x=0;
+
+}
+
+ P0@cta 0,gpu 0           | P1@cta 1,gpu 0           | P2@cta 1,gpu 0           | P3@cta 1,gpu 0           ;
+
+ ld r0, 1                 | ld.weak r0, x            | ld r0, 2                 | ld.weak r0, x            ;
+
+ st.weak x, r0            | fence.sc.cta             | st.weak x, r0            | fence.sc.gpu             ;
+
+                          | ld.weak r2, x            |                          | ld.weak r2, x            ;
+
+exists
+
+(P1:r0 == 1 /\ P1:r2 == 0 /\ P3:r0 == 2 /\ P3:r2 == 2 /\ x == 1)
+{'Memalloy/IRIW_uniproc'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX IRIW_gl_cta
+
+"CoRR"
+
+"https://github.com/johnwickerson/memalloy/blob/master/ptx_testing/IRIW_gl_cta/IRIW_gl_cta.txt"
+
+{
+
+P0:r0=0;
+
+P1:r0=0;
+
+P1:r2=0;
+
+P2:r0=0;
+
+P3:r0=0;
+
+P3:r2=0;
+
+x=0;
+
+}
+
+ P0@cta 0,gpu 0           | P1@cta 1,gpu 0           | P2@cta 1,gpu 0           | P3@cta 1,gpu 0           ;
+
+ ld r0, 1                 | ld.weak r0, x            | ld r0, 1                 | ld.weak r0, x            ;
+
+ st.weak x, r0            | fence.sc.gpu             | st.weak x, r0            | fence.sc.cta             ;
+
+                          | ld.weak r2, x            |                          | ld.weak r2, x            ;
+
+exists
+
+(P1:r0 == 1 /\ P1:r2 == 0 /\ P3:r0 == 1 /\ P3:r2 == 0)
+{'Memalloy/IRIW_gl_cta'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX PC-bar-sync-sync-4
+
+"Producer-Consumer pattern using named barriers. 
+
+ Deadlock."
+
+{
+
+x=0;
+
+P0:r0=0
+
+}
+
+ P0@cta 0,gpu 0 | P1@cta 0,gpu 0 ;
+
+ ld.weak r0, x  | bar.cta.sync 1 ;
+
+ bar.cta.sync 0 | st.weak x, 1   ;
+
+ bar.cta.sync 1 | bar.cta.sync 0 ;
+
+~exists
+
+ (P0:r0 == 0)
+{'Manual/PC-bar-sync-sync-4'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX PC-bar-sync-sync-3
+
+"Producer-Consumer pattern using named barriers. 
+
+ Deadlock."
+
+{
+
+x=0;
+
+P0:r0=0
+
+}
+
+ P0@cta 0,gpu 0 | P1@cta 0,gpu 0 ;
+
+ ld.weak r0, x  | bar.cta.sync 1 ;
+
+ bar.cta.sync 0 | st.weak x, 1   ;
+
+ bar.cta.sync 1 | bar.cta.sync 0 ;
+
+~exists
+
+ (P0:r0 == 1)
+{'Manual/PC-bar-sync-sync-3'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX PC-bar-sync-sync-1
+
+"Producer-Consumer pattern using named barriers. 
+
+ Load is ordered before store due to sync over 0."
+
+{
+
+x=0;
+
+P0:r0=0
+
+}
+
+ P0@cta 0,gpu 0 | P1@cta 0,gpu 0 ;
+
+ ld.weak r0, x  | bar.cta.sync 0 ;
+
+ bar.cta.sync 0 | st.weak x, 1   ;
+
+ bar.cta.sync 1 | bar.cta.sync 1 ;
+
+~exists
+
+ (P0:r0 == 1)
+{'Manual/PC-bar-sync-sync-1'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX Coherence-weak
+
+"Test if P2 and P3 can read updates to x in conflicting order"
+
+{
+
+x=0;
+
+P2:r0=0; P2:r1=0;
+
+P3:r2=0; P3:r3=0;
+
+}
+
+ P0@cta 0,gpu 0 | P1@cta 0,gpu 0 | P2@cta 0,gpu 0       | P3@cta 0,gpu 0       ;
+
+ st.weak x, 1   | st.weak x, 2   | ld.acquire.sys r0, x | ld.acquire.sys r2, x ;
+
+                |                | ld.acquire.sys r1, x | ld.acquire.sys r3, x ;
+
+exists
+
+(P2:r0 == 1 /\ P2:r1 == 2 /\ P3:r2 == 2 /\ P3:r3 == 1)
+{'Manual/Coherence-weak'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX SL-future-minus
+
+"Adapted from Figure 11 in
+
+GPU Concurrency: Weak Behaviours and Programming Assumptions
+
+https://dl.acm.org/doi/pdf/10.1145/2694344.2694391"
+
+{
+
+x=0;
+
+m=1;
+
+P0:r0=0;
+
+P0:r1=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0       | P1@cta 1,gpu 0                   ;
+
+ ld.weak r0, x        | atom.relaxed.gpu.cas r2, m, 0, 1 ;
+
+ st.weak m, 0         | bne r2, 0, LC00                  ;
+
+ fence.sc.gpu         | st.weak x, 1                     ;
+
+                      | LC00:                            ;
+
+exists
+
+ (P0:r0 == 1 /\ P1:r2 == 0)
+{'Manual/SL-future-minus'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX LB-dlb-no-fence-2
+
+"Adapted from Figure 8 in 
+
+GPU Concurrency: Weak Behaviours and Programming Assumptions
+
+https://dl.acm.org/doi/pdf/10.1145/2694344.2694391"
+
+{
+
+t=0;
+
+h=0;
+
+P1:r3=0;
+
+}
+
+ P0@cta 0,gpu 0                   | P1@cta 1,gpu 0                   ;
+
+ atom.relaxed.gpu.cas r0, h, 0, 1 | ld.weak r1, t                    ;
+
+ fence.sc.gpu                     |                                  ;
+
+ st.weak t, 1                     | atom.relaxed.gpu.cas r3, h, 0, 1 ;
+
+exists
+
+ (P0:r0 == 1 /\ P1:r1 == 1)
+{'Manual/LB-dlb-no-fence-2'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX LB-dlb-no-fence-1
+
+"Adapted from Figure 8 in 
+
+GPU Concurrency: Weak Behaviours and Programming Assumptions
+
+https://dl.acm.org/doi/pdf/10.1145/2694344.2694391"
+
+{
+
+t=0;
+
+h=0;
+
+P1:r3=0;
+
+}
+
+ P0@cta 0,gpu 0                   | P1@cta 1,gpu 0                   ;
+
+ atom.relaxed.gpu.cas r0, h, 0, 1 | ld.weak r1, t                    ;
+
+                                  | fence.sc.gpu                     ;
+
+ st.weak t, 1                     | atom.relaxed.gpu.cas r3, h, 0, 1 ;
+
+exists
+
+ (P0:r0 == 1 /\ P1:r1 == 1)
+{'Manual/LB-dlb-no-fence-1'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX SB+sc-sys-gpu
+
+"SB is not allowed because sc fences are morally strong and thus synchronize"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r1=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 0         ;
+
+ st.weak x, 1           | st.weak y, 1           ;
+
+ fence.sc.sys           | fence.sc.gpu           ;
+
+ ld.weak r1, y          | ld.weak r2, x          ;
+
+~exists
+
+(P0:r1 != 1 /\ P1:r2 != 1)
+{'Manual/SB+sc-sys-gpu'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX SB+sc-sys
+
+"SB is not allowed because sc fences are morally strong and thus synchronize"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r1=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 1         ;
+
+ st.weak x, 1           | st.weak y, 1           ;
+
+ fence.sc.sys           | fence.sc.sys           ;
+
+ ld.weak r1, y          | ld.weak r2, x          ;
+
+~exists
+
+(P0:r1 != 1 /\ P1:r2 != 1)
+{'Manual/SB+sc-sys'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX SB+sc-gpu-multiFence
+
+"SB is not allowed because sc fences are morally strong and thus synchronize"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r1=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 0         ;
+
+ st.weak x, 1           | st.weak y, 1           ;
+
+ fence.sc.gpu           | fence.sc.gpu           ;
+
+ st.weak x, 2           | st.weak y, 2           ;
+
+ fence.sc.gpu           | fence.sc.gpu           ;
+
+ ld.weak r1, y          | ld.weak r2, x          ;
+
+forall
+
+(P0:r1 == 2 \/ P1:r2 == 2)
+{'Manual/SB+sc-gpu-multiFence'} weak forall (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX SB+sc-gpu
+
+"SB is not allowed because sc fences are morally strong and thus synchronize"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r1=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 0         ;
+
+ st.weak x, 1           | st.weak y, 1           ;
+
+ fence.sc.gpu           | fence.sc.gpu           ;
+
+ ld.weak r1, y          | ld.weak r2, x          ;
+
+~exists
+
+(P0:r1 != 1 /\ P1:r2 != 1)
+{'Manual/SB+sc-gpu'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX SB+sc-cta
+
+"SB is not allowed because sc fences are morally strong and thus synchronize"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r0=0;
+
+P1:r1=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         ;
+
+ st.weak x, 1           | st.weak y, 1           ;
+
+ fence.sc.cta           | fence.sc.cta           ;
+
+ ld.weak r0, y          | ld.weak r1, x          ;
+
+forall
+
+(P0:r0 == 1 \/ P1:r1 == 1)
+{'Manual/SB+sc-cta'} weak forall (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX SB+bar-reg-diff
+
+"SB is allowed because fences have different reg id and thus they do not synchronize"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r0=0; P0:r2=1;
+
+P1:r1=0; P1:r3=2;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         ;
+
+ st.weak x, 1           | st.weak y, 1           ;
+
+ bar.cta.sync r2        | bar.cta.sync r3        ;
+
+ ld.weak r0, y          | ld.weak r1, x          ;
+
+forall
+
+(P0:r0 == 1 \/ P1:r1 == 1)
+{'Manual/SB+bar-reg-diff'} weak forall (our - 1 exp - 0 )
+
+______________________________________________________________________________________________
+PTX SB+bar-reg-const-diff
+
+"SB is allowed because fences have different ids and thus they do not synchronize"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r0=0; P0:r2=0;
+
+P1:r1=0; P1:r3=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         ;
+
+ st.weak x, 1           | st.weak y, 1           ;
+
+ bar.cta.sync r2        | bar.cta.sync 1         ;
+
+ ld.weak r0, y          | ld.weak r1, x          ;
+
+forall
+
+(P0:r0 == 1 \/ P1:r1 == 1)
+{'Manual/SB+bar-reg-const-diff'} weak forall (our - 1 exp - 0 )
+
+______________________________________________________________________________________________
+PTX SB+bar-diff-cta
+
+"SB is allowed because fences have cta scope and threads are in different cta"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r0=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 0         ;
+
+ st.weak x, 1           | st.weak y, 1           ;
+
+ bar.cta.sync 1         | bar.cta.sync 1         ;
+
+ ld.weak r0, y          | ld.weak r1, x          ;
+
+forall
+
+(P0:r0 == 1 \/ P1:r1 == 1)
+{'Manual/SB+bar-diff-cta'} weak forall (our - 1 exp - 0 )
+
+______________________________________________________________________________________________
+PTX SB+bar-const-equal
+
+"SB is not allowed because fences have the same id and thus synchronize"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r0=0;
+
+P1:r1=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         ;
+
+ st.weak x, 1           | st.weak y, 1           ;
+
+ bar.cta.sync 1         | bar.cta.sync 1         ;
+
+ ld.weak r0, y          | ld.weak r1, x          ;
+
+forall
+
+(P0:r0 == 1 \/ P1:r1 == 1)
+{'Manual/SB+bar-const-equal'} weak forall (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX SB+bar-const-diff
+
+"SB is allowed because fences have different id and thus not synchronize"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r0=0;
+
+P1:r1=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         ;
+
+ st.weak x, 1           | st.weak y, 1           ;
+
+ bar.cta.sync 0         | bar.cta.sync 1         ;
+
+ ld.weak r0, y          | ld.weak r1, x          ;
+
+forall
+
+(P0:r0 == 1 \/ P1:r1 == 1)
+{'Manual/SB+bar-const-diff'} weak forall (our - 1 exp - 0 )
+
+______________________________________________________________________________________________
+PTX Red-plus-location
+
+"Atomicity of Read Modify Write(RMW): location should receive updates from both threads"
+
+{
+
+P0:r0=0;
+
+P1:r0=0;
+
+x=0;
+
+}
+
+ P0@cta 0,gpu 0                   | P1@cta 1,gpu 0                   ;
+
+ red.acq_rel.sys.add x, 1         | red.acq_rel.sys.add x, 1  ;
+
+forall
+
+(x == 2)
+{'Manual/Red-plus-location_'} - forall (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX MP-sys-fence
+
+"Message passing, sync because fences are morally strong and release/acquire pattern is formed"
+
+{
+
+x=0;
+
+y=0;
+
+P1:r1=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         ;
+
+ st.weak x, 1           | ld.relaxed.sys r1, y   ;
+
+ fence.acq_rel.sys      | fence.acq_rel.sys      ;
+
+ st.relaxed.sys y, 1    | ld.weak r2, x          ;
+
+~exists
+
+(P1:r1 == 1 /\ P1:r2 != 1)
+{'Manual/MP-sys-fence'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX MP-sys
+
+"Message passing, sync because release/acquire are morally strong"
+
+{
+
+x=0;
+
+y=0;
+
+P1:r1=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         ;
+
+ st.weak x, 1           | ld.acquire.sys r1, y   ;
+
+ st.release.sys y, 1    | ld.weak r2, x          ;
+
+~exists
+
+(P1:r1 == 1 /\ P1:r2 != 1)
+{'Manual/MP-sys'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX MP-gpu
+
+"Message passing, sync because release/acquire are morally strong"
+
+{
+
+x=0;
+
+y=0;
+
+P1:r1=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         ;
+
+ st.weak x, 1           | ld.acquire.gpu r1, y   ;
+
+ st.release.gpu y, 1    | ld.weak r2, x          ;
+
+~exists
+
+(P1:r1 == 1 /\ P1:r2 != 1)
+{'Manual/MP-gpu'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX MP-cta-gpu
+
+"Message passing, sync because release/acquire operations are morally strong"
+
+{
+
+x=0;
+
+y=0;
+
+P1:r1=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         ;
+
+ st.weak x, 1           | ld.acquire.gpu r1, y   ;
+
+ st.release.cta y, 1    | ld.weak r2, x          ;
+
+~exists
+
+(P1:r1 == 1 /\ P1:r2 != 1)
+{'Manual/MP-cta-gpu'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX MP-3-transitive
+
+"Adapted from Figure 6 of paper: Heterogeneous-race-free Memory Models"
+
+{
+
+x=0; y=0; z=0;
+
+P1:r0=0; P2:r1=0; P2:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         | P2@cta 1,gpu 0         ;
+
+ st.weak x, 1           | ld.acquire.cta r0, y   | ld.acquire.gpu r1, z   ;
+
+ st.release.cta y, 1    | st.release.gpu z, 1    | ld.weak r2, x          ;
+
+~exists
+
+(P1:r0 == 1 /\ P2:r1 == 1 /\ P2:r2 != 1)
+{'Manual/MP-3-transitive'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX NoThinAir-register
+
+"No-Thin-Air"
+
+{
+
+P0:r1=0;
+
+P1:r2=0;
+
+x=0;
+
+y=0;
+
+}
+
+ P0@cta 0,gpu 0                   | P1@cta 1,gpu 0                   ;
+
+ ld.weak r1, y                    | ld.weak r2, x                    ;
+
+ st.weak x, r1                    | st.weak y, r2                    ;
+
+~exists
+
+(P0:r1 == 42 /\ P1:r2 == 42)
+{'Manual/LB+NoThinAir-register'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX NoThinAir-location
+
+"No-Thin-Air"
+
+{
+
+P0:r1=0;
+
+P1:r2=0;
+
+x=0;
+
+y=0;
+
+}
+
+ P0@cta 0,gpu 0                   | P1@cta 1,gpu 0                   ;
+
+ ld.weak r0, x                    | ld.weak r1, y                    ;
+
+ st.weak y, r0                    | st.weak x, r1                    ;
+
+~exists
+
+(x == 42 /\ y == 42)
+{'Manual/LB+NoThinAir-location_'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoWW
+
+"Coherence, Write-Write"
+
+{
+
+x = 0;
+
+}
+
+ P0@cta 0,gpu 0             ;
+
+ st.weak x, 1               ;
+
+ st.weak x, 2               ;
+
+~exists
+
+(x == 1)
+{'Manual/CoWW_'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoWW-RR
+
+"Non-atomic memory operations may be observed by one thread in a different order than they were written by another thread"
+
+{
+
+P1:r0 = 0;
+
+P1:r1 = 0;
+
+x=0;
+
+}
+
+ P0@cta 0,gpu 0 | P1@cta 0,gpu 0 ;
+
+ st.weak x, 1   | ld.weak r0, x  ;
+
+ st.weak x, 2   | ld.weak r1, x  ;
+
+exists
+
+(P1:r0 == 2 /\ P1:r1 == 1)
+{'Manual/CoWW-RR'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoWW-R
+
+"Coherence, Write Write"
+
+{
+
+x = 0;
+
+}
+
+ P0@cta 0,gpu 0             ;
+
+ st.weak x, 1               ;
+
+ st.weak x, 2               ;
+
+ ld.acquire.sys r1, x       ;
+
+~exists
+
+(P0:r1 == 1)
+{'Manual/CoWW-R'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoWR
+
+"Coherence, Write-Read"
+
+{
+
+x=0;
+
+P1:r1=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 0          ;
+
+ st.release.gpu x, 1    | st.release.gpu x, 2     ;
+
+                        | ld.weak r1, x           ;
+
+~exists
+
+(x == 2 /\ P1:r1 == 1)
+{'Manual/CoWR_'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoWR-R
+
+"Coherence, Write Read"
+
+{
+
+x=0;
+
+P1:r1=0;
+
+P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 1          ;
+
+ st.release.gpu x, 1    | st.release.sys x, 2     ;
+
+                        | ld.weak r1, x           ;
+
+                        | ld.weak r2, x           ;
+
+exists
+
+(P1:r1 == 1 /\ P1:r2 == 2)
+{'Manual/CoWR-R'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoRW
+
+"Coherence, Read-Write"
+
+{
+
+P1:r1=0;
+
+x=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 0         ;
+
+ st.release.gpu x, 1    | ld.acquire.gpu r1, x   ;
+
+                        | st.weak x, 2           ;
+
+~exists
+
+(1:r1 == 1 /\ x == 1)
+{'Manual/CoRW_'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoRW-R
+
+"Coherence, Read-Write + Read"
+
+{
+
+P1:r1=0;
+
+P1:r2=0;
+
+x=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 0         ;
+
+ st.release.sys x, 1    | ld.acquire.sys r1, x   ;
+
+                        | st.weak x, 2           ;
+
+                        | ld.weak r2, x          ;
+
+~exists
+
+(P1:r1 == 1 /\ P1:r2 == 1)
+{'Manual/CoRW-R'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoRR-weak-weak
+
+"Coherence, Read Read"
+
+{
+
+x = 0;
+
+P1:r1=0; P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 1          ;
+
+ st.release.gpu x, 1    | ld.weak r1, x           ;
+
+                        | ld.weak r2, x           ;
+
+exists
+
+(P1:r1 == 1 /\ P1:r2 == 0)
+{'Manual/CoRR-weak-weak'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoRR-weak-acquire-weak
+
+"Coherence, Read Read"
+
+{
+
+x = 0;
+
+P1:r1=0; P1:r2=0; P1:r3=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 1          ;
+
+                        | ld.weak r1, x           ;
+
+ st.release.gpu x, 1    | ld.acquire.gpu r2, x    ;
+
+ st.weak x, 2           | ld.weak r3, x           ;
+
+exists
+
+(P1:r1 == 2 /\ P1:r3 == 1)
+{'Manual/CoRR-weak-acquire-weak'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoRR-relaxed-acquire-weak
+
+"Coherence, Read Read"
+
+{
+
+x = 0;
+
+P1:r1=0; P1:r2=0; P1:r3=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 1          ;
+
+                        | ld.relaxed.gpu r1, x    ;
+
+ st.release.gpu x, 1    | ld.acquire.gpu r2, x    ;
+
+ st.relaxed.gpu x, 2    | ld.weak r3, x           ;
+
+exists
+
+(P1:r1 == 2 /\ P1:r3 == 1)
+{'Manual/CoRR-relaxed-acquire-weak'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX CoRR-acquire-weak
+
+"Coherence, Read-Read"
+
+{
+
+x = 0;
+
+P1:r1=0; P1:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 0          ;
+
+ st.release.gpu x, 1    | ld.acquire.gpu r1, x    ;
+
+                        | ld.weak r2, x           ;
+
+~exists
+
+(P1:r1 == 1 /\ P1:r2 == 0)
+{'Manual/CoRR-acquire-weak'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX Co-Total-4-threads
+
+"Release consistency of three locations"
+
+{
+
+x=0; f1=0; f2=0;
+
+P2:r0=0; P2:r1=0; P2:r2=0;
+
+P3:r3=0; P3:r4=0; P3:r5=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         | P2@cta 0,gpu 0         | P3@cta 0,gpu 0         ;
+
+ st.weak x, 1           | st.weak x, 2           | ld.acquire.sys r0, f1  | ld.acquire.sys r3, f1  ;
+
+ st.release.sys f1, 1   | st.release.sys f2, 1   | ld.acquire.sys r1, f2  | ld.acquire.sys r4, f2  ;
+
+                        |                        | ld.weak r2, x          | ld.weak r5, x   ;
+
+exists
+
+(P2:r0 == 1 /\ P2:r1 == 1 /\ P2:r2 == 1 /\ P3:r3 == 1 /\ P3:r4 == 1 /\ P3:r5 == 2)
+{'Manual/Co-Total-4-threads'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX Co-Total-3-threads-scope-same
+
+"cyclic weak rf when not sync"
+
+{
+
+x=0; f1=0; f2=0;
+
+P2:r0=0; P2:r1=0; P2:r2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         | P2@cta 0,gpu 0         ;
+
+ st.weak x, 1           | st.weak x, 2           | ld.acquire.sys r0, f1  ;
+
+ st.release.sys f1, 1   | st.release.sys f2, 1   | ld.acquire.sys r1, f2  ;
+
+                        |                        | ld.weak r2, x   ;
+
+                        |                        | ld.weak r3, x   ;
+
+exists
+
+(P2:r0 == 1 /\ P2:r1 == 1 /\ P2:r2 == 1 /\ P2:r3 == 2)
+{'Manual/Co-Total-3-threads-scope-same'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX Cause-base-weak
+
+"https://github.com/NVlabs/mixedproxy/issues/4"
+
+{
+
+x=0;
+
+f1=0;
+
+f2=0;
+
+P1:r1=0;
+
+P2:r1=0;P2:r2=0;P2:r3=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 0          | P2@cta 2,gpu 0         ;
+
+ st.weak x, 1           | st.release.gpu x, 2     | ld.acquire.sys r2, f1  ;
+
+                        | ld.weak r1, x           | ld.acquire.sys r3, f2  ;
+
+ st.release.sys f1, 1   | st.release.sys f2, 1    | ld.weak r4, x   ;
+
+exists
+
+(P1:r1 == 1 /\ P2:r2 == 1 /\ P2:r3 == 1 /\ P2:r4 == 2)
+{'Manual/Cause-base-weak'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX Cause-base-strong
+
+"https://github.com/NVlabs/mixedproxy/issues/4"
+
+{
+
+P1:r1=0;
+
+P2:r1=0;P2:r2=0;P2:r3=0;
+
+x=0;
+
+f1=0;
+
+f2=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 1,gpu 0         | P2@cta 2,gpu 0         ;
+
+ st.release.gpu x, 1    | ld.acquire.gpu r1, x   | ld.acquire.sys r1, f2  ;
+
+                        | st.weak x, 2           | ld.acquire.sys r2, f2  ;
+
+ st.release.sys f1, 1   | st.release.sys f2, 1   | ld.weak r3, x   ;
+
+
+
+~exists
+
+(1:r1 == 1 /\ 2:r1 == 1 /\ 2:r2 == 1 /\ 2:r3 == 1)
+{'Manual/Cause-base-strong'} weak - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX _Atom-plus-location
+
+"Atomicity is guaranteed because the operations scope is sys and they are morally strong"
+
+{
+
+P0:r0=0;
+
+P1:r0=0;
+
+x=0;
+
+}
+
+ P0@cta 0,gpu 0                   | P1@cta 1,gpu 0                   ;
+
+ atom.acq_rel.sys.add r0, x, 1    | atom.acq_rel.sys.add r0, x, 1  ;
+
+forall
+
+(x == 2)
+{'Manual/Atom-plus-location_'} - forall (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX _Atom-plus-location
+
+"Atomicity is not guaranteed because the operations scope is cta and they are in different cta (not morally strong)"
+
+{
+
+P0:r0=0;
+
+P1:r0=0;
+
+x=0;
+
+}
+
+ P0@cta 0,gpu 0                   | P1@cta 1,gpu 0                   ;
+
+ atom.acq_rel.cta.add r0, x, 1    | atom.acq_rel.cta.add r0, x, 1  ;
+
+exists
+
+(x != 2)
+{'Manual/Atom-plus-location-weak_'} - - (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX SB+bar-dyn-reg-const
+
+"SB is allowed because fences can have different ids and thus they do not synchronize"
+
+{
+
+x=0;
+
+y=0;
+
+z=0;
+
+P0:r0=0; P0:r2=0;
+
+P1:r1=0; P1:r3=0;
+
+}
+
+ P0@cta 0,gpu 0  | P1@cta 0,gpu 0 | P2@cta 0,gpu 0 ;
+
+ st.weak x, 1    | st.weak y, 1   | st.weak z, 1   ;
+
+ ld.weak r2, z   | bar.cta.sync 1 |                ;
+
+ bar.cta.sync r2 | ld.weak r1, x  |                ;
+
+ ld.weak r0, y   |                |                ;
+
+forall
+
+(P0:r0 == 1 \/ P1:r1 == 1)
+
+{'Manual/SB+bar-dyn-reg-const'} weak forall (our - 1 exp - 0 )
+
+______________________________________________________________________________________________
+PTX SB-cta
+
+"https://github.com/NVlabs/mixedproxy/blob/main/tests/SB_cta.test"
+
+{
+
+x=0;
+
+y=0;
+
+P0:r0=0;
+
+P1:r1=0;
+
+}
+
+ P0@cta 0,gpu 0         | P1@cta 0,gpu 0         ;
+
+ st.weak x, 1           | st.weak y, 2           ;
+
+ fence.sc.cta           | fence.sc.cta           ;
+
+ ld.weak r0, y          | ld.weak r1, x          ;
+
+forall
+
+(P0:r0 == 2 \/ P1:r1 == 1)
+{'Nvidia/SB-cta'} weak forall (our - 0 exp - 1 )
+
+______________________________________________________________________________________________
+PTX Atom-SB
+
+"RMW store buffering"
+
+"https://github.com/NVlabs/mixedproxy/blob/main/tests/SB_rmw.test"
+
+{
+
+P0:r0=0;
+
+P1:r1=0;
+
+x=0;
+
+y=0;
+
+}
+
+ P0@cta 0,gpu 0                       | P1@cta 1,gpu 0                         ;
+
+ atom.acq_rel.gpu.add r1, x, 1        | atom.acq_rel.gpu.add r3, y, 1         ;
+
+ atom.acq_rel.gpu.add r2, y, 1        | atom.acq_rel.gpu.add r4, x, 1         ;
+
+forall
+
+(P0:r2 != 0 \/ P1:r4 != 0)
+{'Nvidia/Atom-SB'} - forall (our - 0 exp - 1 )

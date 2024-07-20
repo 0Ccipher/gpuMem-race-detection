@@ -11,11 +11,11 @@ import os
 
 curDir = os.getcwd()
 
-CBIN = curDir + '/C-litmus'
-LITCBIN = curDir + '/litmus-to-C.py'
+CBIN = curDir + '/litmus-tests'
+LITCBIN = curDir + '/ptx-to-C.py'
 PYTHONBIN = 'python3'
-LITMUSDIR= curDir + '/litmus-tests'
-EXPECTEDLISTFILE= curDir+'/cc.herd.results.txt'
+LITMUSDIR= curDir + '/PTX'
+EXPECTEDLISTFILE= curDir+'/listfile.txt'
 
 LOGFILENAME='generate-C-Litmus.log'
 
@@ -25,9 +25,10 @@ def get_expected(fname):
     for ln in f:
         ln = ln.strip()
         if len(ln) and not(ln[0] == '#'):
-            #print(ln)
-            [tst,exp] = ln.split()
-            assert(exp == 'Allow' or exp == 'Forbid')
+            tst=ln
+            exp='Allow'
+            # [tst,exp] = ln.split()
+            # assert(exp == 'Allow' or exp == 'Forbid')
             l.append({'tstname':tst,'expect allow':(exp=='Allow')})
     f.close()
     return l
@@ -52,12 +53,14 @@ def runall():
         n=n+1
         try:
             out=subprocess.check_output([PYTHONBIN,LITCBIN,LITMUSDIR+'/'+tst['tstname']+'.litmus'],stderr=subprocess.STDOUT).decode()
-            litirfile=open(CBIN+'/'+tst['tstname']+'.c','w')
+            outf = tst['tstname'].replace('/','_')
+            litirfile=open(CBIN+'/'+outf+'.c','w')
             litirfile.write(out)
             litirfile.flush()
             tst['litc done']=True
         except subprocess.CalledProcessError:
             tst['failure']='litc'
+
             continue
         finally:
             #litirfile.close()

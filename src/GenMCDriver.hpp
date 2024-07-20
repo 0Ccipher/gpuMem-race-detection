@@ -207,6 +207,13 @@ public:
 		return groupsize;
 	}
 
+	void setPTXLikeCAS(bool f){
+		ptxlikeCAS = f;
+	}
+	int getPTXLikeCAS(){
+		return ptxlikeCAS;
+	}
+
 	/*** Instruction-related actions ***/
 
 	/* Returns the value this load reads */
@@ -258,6 +265,10 @@ public:
 	
 	/* Visit instruction to update the scope*/
 	void visitUpdateScope(int scope);
+	void visitUpdateWeakAccess(int access);
+	void visitPTXCAS(bool flag);
+	bool getPTXCASStatus() {return getPTXLikeCAS();}
+	void setPTXCASStatus(bool flag) {return setPTXLikeCAS(flag);}
 
 	/* A call to __VERIFIER_spin_start() has been interpreted */
 	void visitSpinStart(std::unique_ptr<SpinStartLabel> lab);
@@ -776,6 +787,15 @@ private:
 	void updateScope(int s){
 		scope = s;
 	}
+	/* Get the current weakaccess */
+	short int getWeakAccessStatus(){
+		return weak_access;
+	}
+
+	/* Update the current weakaccess */
+	void updateWeakAccessStatus(int s){
+		weak_access = s;
+	}
 
 #ifdef ENABLE_GENMC_DEBUG
 	void checkForDuplicateRevisit(const ReadLabel *rLab, const WriteLabel *sLab);
@@ -825,9 +845,11 @@ private:
 	/* Dbg: Random-number generator for scheduling randomization */
 	MyRNG rng;
 
-	/*Current scope value 1=device , 2=work-group*/
+	/*Current scope value 1=device , 2=work-group , 3=system*/
 	short int scope = -1;
+	short int weak_access = -1;
 	int groupsize = -1;
+	bool ptxlikeCAS = false;
 
 	std::unordered_map<int,int> activeBarriers;
 

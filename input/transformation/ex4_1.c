@@ -20,6 +20,8 @@ void __VERIFIER_thread_group_id(int a)          ;
 void __VERIFIER_thread_kernel_id(int a)         ;
 atomic_int X = 0;
 atomic_int Y = 0;
+int x = 0;
+int y= 0;
 // __global int X = 0;
 // __global ient Y = 0;
 
@@ -67,6 +69,7 @@ void *kernel2(void *arg) {
      
    
     int value = -1;
+    int vx = x;
     __VERIFIER_memory_scope_work_group();
     int tempy = atomic_load_explicit(&Y, memory_order_acquire);
     if(tempy == 1){

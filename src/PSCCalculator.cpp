@@ -296,11 +296,18 @@ bool PSCCalculator::isScopeInclusive(const Event i , const Event j) const
 	auto &g = getGraph();
 	const EventLabel *labi = g.getEventLabel(i);
 	const EventLabel *labj = g.getEventLabel(j);
-	if ((labi->getScope()==2 && labj->getScope()==2 && 
-			labi->getKernelId() == labj->getKernelId() && 
-			labi->getGroupId() == labj->getGroupId()) || 
-		(labi->getScope()==1 && labj->getScope()==1) || 
-		(labi->getScope() == -1 && labj->getScope() == -1)) {
+	if ((labi->getScope()==2 && (labj->getScope()==2 || labj->getScope()==1 || labj->getScope()==3) 
+			&& labi->getKernelId() == labj->getKernelId() 
+			&& labi->getGroupId() == labj->getGroupId()) 		|| 
+		(labj->getScope()==2 && (labi->getScope()==2 || labi->getScope()==1 || labi->getScope()==3) 
+			&& labi->getKernelId() == labj->getKernelId() 
+			&& labi->getGroupId() == labj->getGroupId()) 		||
+		(labi->getScope()==1 && (labj->getScope()==1 || labj->getScope()==3) 
+			&& labi->getKernelId() == labj->getKernelId()) 		||
+		(labj->getScope()==1 && (labi->getScope()==1 || labi->getScope()==3) 
+			&& labi->getKernelId() == labj->getKernelId()) 		||
+		(labi->getScope()==3 && labj->getScope()==3) 			|| 
+		(labi->getGroupId() == -1 && labj->getGroupId() == -1)) {
 			return true;
 	}
 	return false;

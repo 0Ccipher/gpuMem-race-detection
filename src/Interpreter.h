@@ -786,12 +786,16 @@ private:  // Helper functions
 
   DECLARE_CUSTOM_OPCODE(memory_scope_device);
   DECLARE_CUSTOM_OPCODE(memory_scope_work_group);
+  DECLARE_CUSTOM_OPCODE(memory_scope_system);
   DECLARE_CUSTOM_OPCODE(thread_global_id);
   DECLARE_CUSTOM_OPCODE(thread_local_id);
   DECLARE_CUSTOM_OPCODE(thread_group_id);
   DECLARE_CUSTOM_OPCODE(thread_kernel_id);
   DECLARE_CUSTOM_OPCODE(syncthread);
   DECLARE_CUSTOM_OPCODE(groupsize);
+  DECLARE_CUSTOM_OPCODE(weak_access);
+  DECLARE_CUSTOM_OPCODE(ret_CAS);
+  
   
 
   void callInternalFunction(Function *F, const std::vector<GenericValue> &ArgVals,

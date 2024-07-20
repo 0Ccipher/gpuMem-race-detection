@@ -7,7 +7,7 @@
 #include <limits.h>
 
 
-#define NBLOCKS 3
+#define NBLOCKS 2
 #define NTHREADS 2
 
 #define WORK_ITEMS_PER_GROUP NTHREADS

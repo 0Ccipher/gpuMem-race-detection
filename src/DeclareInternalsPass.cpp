@@ -62,12 +62,15 @@ bool DeclareInternalsPass::runOnModule(Module &M)
 	//Aniket
 	modified |= declareInternal(M, "__VERIFIER_memory_scope_device", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_memory_scope_work_group", Type::getVoidTy(M.getContext()), {});
+	modified |= declareInternal(M, "__VERIFIER_memory_scope_system", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_thread_global_id", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_thread_local_id", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_thread_group_id", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_thread_kernel_id", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_syncthread", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_groupsize", Type::getVoidTy(M.getContext()), {});
+	modified |= declareInternal(M, "__VERIFIER_weak_access", Type::getVoidTy(M.getContext()), {});
+	modified |= declareInternal(M, "__VERIFIER_ret_CAS", Type::getVoidTy(M.getContext()), {});
 	return modified;
 }
 

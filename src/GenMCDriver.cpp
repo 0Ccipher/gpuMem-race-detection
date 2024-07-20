@@ -448,7 +448,7 @@ bool GenMCDriver::isExecutionBlocked() const
 			   [this](const llvm::Thread &thr){
 				   auto *bLab = llvm::dyn_cast<BlockLabel>(getGraph().getLastThreadLabel(thr.id));
 				   return bLab || thr.isBlocked(); });
-	if(status) WARN("Blocked Execution - Divergence Occured\n");
+	// if(status) WARN("Blocked Execution - Divergence Occured\n");
 	return status;
 }
 
@@ -1859,7 +1859,10 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 		rLab->setBarrierId(thr.barriedID);
 		EE->incBarrierId();
 	}
-
+	if(getWeakAccessStatus() != -1){
+		rLab->updateOrdering(1);
+		updateWeakAccessStatus(-1);
+	}
 	if (inRecoveryMode())
 		return getRecReadRetValue(rLab.get());
 
@@ -1984,6 +1987,11 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		EE->incBarrierId();
 	}
 
+	if(getWeakAccessStatus() != -1){
+		wLab->updateOrdering(1);
+		updateWeakAccessStatus(-1);
+	}
+
 	if (isExecutionDrivenByGraph())
 		return;
 
@@ -1993,6 +2001,10 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	wLab->setScope(scope);
 	wLab->setGroupId(EE->getCurThr().group_id);
 	wLab->setKernelId(EE->getCurThr().kernel_id);
+	// if(getWeakAccessStatus() != -1){
+	// 	wLab->updateOrdering(1);
+	// 	updateWeakAccessStatus(-1);
+	// }
 	// WARN("Store :(" + to_string(wLab->getPos().thread)+ ","+to_string(wLab->getPos().index) + 
 	// 		") scope : "+to_string(wLab->getScope())+" Group id : " + to_string(wLab->getGroupId())+
 	// 		" Kernel id : " + to_string(wLab->getKernelId())+"\n");	
@@ -2420,7 +2432,7 @@ void GenMCDriver::reportRaces(Event pos, std::vector<Event> &races)
 
 	getEE()->replayExecutionBefore(getReplayView());
 
-	WARN("Racey ( " + to_string(pos.thread) + ","+ to_string(pos.index) + ")\n");
+	// WARN("Racey ( " + to_string(pos.thread) + ","+ to_string(pos.index) + ")\n");
 	for(auto &confEvent : races){
 		const EventLabel *raceLab1 = g.getEventLabel(pos);
 		const EventLabel *raceLab2 = g.getEventLabel(confEvent);
@@ -2440,8 +2452,8 @@ void GenMCDriver::reportRaces(Event pos, std::vector<Event> &races)
 		}
 		string s1 = (llvm::isa<WriteLabel>(raceLab1))? "Wr":"Rd";
 		string s2 = (llvm::isa<WriteLabel>(raceLab2))? "Wr":"Rd";
-		WARN("Racey "+s1+"( " + to_string(pos.thread) + ","+ to_string(pos.index) + "), "+s2+"(" 
-			+ to_string(confEvent.thread)+ ","+ to_string(confEvent.index)+")\n");
+		// WARN("Racey "+s1+"( " + to_string(pos.thread) + ","+ to_string(pos.index) + "), "+s2+"(" 
+		// 	+ to_string(confEvent.thread)+ ","+ to_string(confEvent.index)+")\n");
 		/*Remember the race*/
 		auto &thr1 = getEE()->getThrById(e1.thread);
 		auto &thr2 = getEE()->getThrById(e2.thread);
@@ -2460,7 +2472,7 @@ void GenMCDriver::reportRaces(Event pos, std::vector<Event> &races)
 				if(result.races.find(std::make_pair(pair1.first,pair2.first)) == result.races.end() 
 					&& result.races.find(std::make_pair(pair2.first,pair1.first)) == result.races.end()) {
 					result.races.insert(std::make_pair(pair1.first,pair2.first));
-					WARN("Report Race (L. " + to_string(pair1.first) + ", L." + to_string(pair2.first)+")\n");
+					// WARN("Report Race (L. " + to_string(pair1.first) + ", L." + to_string(pair2.first)+")\n");
 					++result.racecount;
 				}
 			}
@@ -3228,6 +3240,14 @@ void GenMCDriver::visitLoopBegin(std::unique_ptr<LoopBeginLabel> lab)
 
 void GenMCDriver::visitUpdateScope(int scope) {
 	updateScope(scope);
+}
+
+void GenMCDriver::visitPTXCAS(bool flag) {
+	setPTXLikeCAS(flag);
+}
+
+void GenMCDriver::visitUpdateWeakAccess(int access) {
+	updateWeakAccessStatus(access);
 }
 
 bool GenMCDriver::isWriteEffectful(const WriteLabel *wLab)

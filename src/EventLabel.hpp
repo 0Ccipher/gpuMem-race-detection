@@ -239,6 +239,12 @@ public:
 	void setBarrierId(int id){bid = id;};
 	int getBarrierId() const{ return bid;};
 
+	void updateOrdering(int ord){
+		if(ord != -1){
+			ordering = llvm::AtomicOrdering::NotAtomic;
+		}
+	}
+
 private:
 	/*IF it is barrier*/
 	int bid = -1;

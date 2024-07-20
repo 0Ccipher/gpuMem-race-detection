@@ -10,4 +10,4 @@ P3:r3=0; P3:r4=0; P3:r5=0;
  st.release.sys f1, 1   | st.release.sys f2, 1   | ld.acquire.sys r1, f2  | ld.acquire.sys r4, f2  ;
                         |                        | ld.weak r2, x          | ld.weak r5, x   ;
 exists
-(P2:r0 = 1 /\ P2:r1 = 1 /\ P2:r2 = 1 /\ P3:r3 = 1 /\ P3:r4 = 1 /\ P3:r5 = 2)
+(P2:r0 == 1 /\ P2:r1 == 1 /\ P2:r2 == 1 /\ P3:r3 == 1 /\ P3:r4 == 1 /\ P3:r5 == 2)

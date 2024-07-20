@@ -1633,8 +1633,16 @@ void Interpreter::visitAtomicCmpXchgInst(AtomicCmpXchgInst &I)
 	updateDataDeps(getCurThr().id, &I, currPos());
 	updateAddrPoDeps(getCurThr().id, I.getPointerOperand());
 
-	result.AggregateVal.push_back(SVAL_TO_GV(ret, typ));
-	result.AggregateVal.push_back(INT_TO_GV(Type::getInt1Ty(I.getContext()), cmpRes));
+	if(driver->getPTXCASStatus()){
+		result.AggregateVal.push_back(SVAL_TO_GV(ret, typ));
+		result.AggregateVal.push_back(SVAL_TO_GV(ret, typ));
+		driver->setPTXCASStatus(false);
+
+	}
+	else{
+		result.AggregateVal.push_back(SVAL_TO_GV(ret, typ));
+		result.AggregateVal.push_back(INT_TO_GV(Type::getInt1Ty(I.getContext()), cmpRes));
+	}
 	SetValue(&I, result, ECStack().back());
 	return;
 }
@@ -2839,6 +2847,13 @@ void Interpreter::callLoopBegin(Function *F, const std::vector<GenericValue> &Ar
 	driver->visitLoopBegin(LoopBeginLabel::create(nextPos()));
 }
 
+void Interpreter::callret_CAS(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	driver->visitPTXCAS(true);
+	WARN("PTX Like CAS\n");
+}
+
 void Interpreter::callmemory_scope_device(Function *F, const std::vector<GenericValue> &ArgVals,
 				const std::unique_ptr<EventDeps> &specialDeps)
 {
@@ -2850,6 +2865,18 @@ void Interpreter::callmemory_scope_work_group(Function *F, const std::vector<Gen
 				const std::unique_ptr<EventDeps> &specialDeps)
 {
 	driver->visitUpdateScope(2);
+}
+
+void Interpreter::callmemory_scope_system(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	driver->visitUpdateScope(3);
+}
+
+void Interpreter::callweak_access(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	driver->visitUpdateWeakAccess(1);
 }
 
 void Interpreter::callthread_global_id(Function *F, const std::vector<GenericValue> &ArgVals,
@@ -4609,15 +4636,18 @@ void Interpreter::callInternalFunction(Function *F, const std::vector<GenericVal
 		CALL_INTERNAL_FUNCTION(RCUReadUnlockLKMM);
 		CALL_INTERNAL_FUNCTION(SynchronizeRCULKMM);
 
-		//Aniket
+		
 		CALL_INTERNAL_FUNCTION(memory_scope_device);
 		CALL_INTERNAL_FUNCTION(memory_scope_work_group);
+		CALL_INTERNAL_FUNCTION(memory_scope_system);
 		CALL_INTERNAL_FUNCTION(thread_global_id);
 		CALL_INTERNAL_FUNCTION(thread_local_id);
 		CALL_INTERNAL_FUNCTION(thread_group_id);
 		CALL_INTERNAL_FUNCTION(thread_kernel_id);
 		CALL_INTERNAL_FUNCTION(syncthread);
 		CALL_INTERNAL_FUNCTION(groupsize);
+		CALL_INTERNAL_FUNCTION(weak_access);
+		CALL_INTERNAL_FUNCTION(ret_CAS);
 		
 	default:
 		BUG();
