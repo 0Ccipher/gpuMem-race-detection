@@ -110,6 +110,7 @@ public:
 			exploredBlocked += other.exploredBlocked;
 			exploredMoot += other.exploredMoot;
 			racecount += other.racecount;
+			races.insert(other.races.begin() , other.races.end());
 #ifdef ENABLE_GENMC_DEBUG
 			duplicates += other.duplicates;
 #endif

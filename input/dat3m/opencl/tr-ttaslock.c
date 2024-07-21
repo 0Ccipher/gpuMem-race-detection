@@ -7,8 +7,8 @@
 
 #define sc memory_order_seq_cst
 
-#define NBLOCKS 5
-#define NTHREADS 3
+#define NBLOCKS 4
+#define NTHREADS 2
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
@@ -21,7 +21,6 @@ struct ThreadData;
 //  also track the work-item offset in clEnqueueNDRangeKernel()
 void __VERIFIER_memory_scope_work_group()       ;
 void __VERIFIER_memory_scope_device()           ;
-void __VERIFIER_memory_scope_system()           ;
 void __VERIFIER_thread__id(int a)         ;
 void __VERIFIER_thread_local_id(int a)          ;
 void __VERIFIER_thread_group_id(int a)          ;
@@ -63,17 +62,17 @@ int x=0;
 int A[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static void lock() {
-      int e = 0;
-
 #ifdef DV2WG
        __VERIFIER_memory_scope_work_group();
 #else
       __VERIFIER_memory_scope_device();
 #endif
-    if (atomic_compare_exchange_strong_explicit(&l, &e, 1, mo_lock, mo_lock) == 0) {
-        e = 0;}
-    if (atomic_compare_exchange_strong_explicit(&l, &e, 1, mo_lock, mo_lock) == 0) {
-        e = 0;}
+    while(1) {
+        while (atomic_load_explicit(&l, memory_order_relaxed) != 0) {}
+        if(!atomic_exchange_explicit(&l, 1, mo_lock)) {
+            return;
+        }
+    }
 }
 
 static void unlock() {
@@ -86,16 +85,14 @@ static void unlock() {
 }
 
 void mutex_test(int global_id, int group_id, int local_id, int kernel_id) {
-    int a=0;
+    int a;
     lock();
-    __VERIFIER_memory_scope_system();
     a = x;
-    __VERIFIER_memory_scope_system();
     x = a + 1;
     unlock();
-    __VERIFIER_memory_scope_system();
     A[global_id] = a;
-}
+} 
+
 
 void *kernel1( void *arg) {
     struct ThreadData *data = (struct ThreadData *)arg;
@@ -129,6 +126,7 @@ int main(int argc, char **argv){
     int left = globalWorkSize % localWorkSize;
     if( left != 0) groups = groups + 1;
 
+
     //kernel1
     int tcount = 0;
     for(int i = 0 ; i < groups-1; i++){
@@ -137,11 +135,12 @@ int main(int argc, char **argv){
                 workItemInfo[tcount].global_id = tcount+GLOBAL_WORK_OFFSET , workItemInfo[tcount].kernel_id = 0;
             pthread_create(&workItems[tcount], NULL, kernel1, (void *)&workItemInfo[tcount]);
             tcount++;
+  
         }
     }
     //work_items from the last group
     if(left == 0) left = localWorkSize;
-
+  
     for(int j = 0 ; j < left ; j++){
         workItemInfo[tcount].local_id = j, workItemInfo[tcount].group_id = groups-1, 
             workItemInfo[tcount].global_id = tcount + GLOBAL_WORK_OFFSET, workItemInfo[tcount].kernel_id = 0;
@@ -155,4 +154,5 @@ int main(int argc, char **argv){
     }
   return 0;
 }
+
 

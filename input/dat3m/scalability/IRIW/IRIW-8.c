@@ -208,15 +208,16 @@ int main(int argc, char **argv){
   pthread_t thr7; 
 
 
-  pthread_create(&thr0, NULL , t0, NULL);
-  pthread_create(&thr1, NULL , t1, NULL);
-  pthread_create(&thr2, NULL , t2, NULL);
-  pthread_create(&thr3, NULL , t3, NULL);
   pthread_create(&thr4, NULL , t4, NULL);
   pthread_create(&thr5, NULL , t5, NULL);
   pthread_create(&thr6, NULL , t6, NULL);
   pthread_create(&thr7, NULL , t7, NULL);
 
+  pthread_create(&thr0, NULL , t0, NULL);
+  pthread_create(&thr1, NULL , t1, NULL);
+  pthread_create(&thr2, NULL , t2, NULL);
+  pthread_create(&thr3, NULL , t3, NULL);
+  
   pthread_join(thr0,NULL);
   pthread_join(thr1,NULL);
   pthread_join(thr2,NULL);

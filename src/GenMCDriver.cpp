@@ -1039,10 +1039,10 @@ void GenMCDriver::checkForDataRaces(const MemAccessLabel *lab)
 
 	// auto racy = findDataRaceForMemAccess(lab);
 
-	// /* If a race is found and the execution is consistent, return it */
-	// // if (!racy.isInitializer())
-	// // 	visitError(lab->getPos(), Status::VS_RaceNotAtomic, "", racy);
-	// /* If this is a new race then, store it to the result */
+	/* If a race is found and the execution is consistent, return it */
+	// if (!racy.isInitializer())
+	// 	visitError(lab->getPos(), Status::VS_RaceNotAtomic, "", racy);
+	/* If this is a new race then, store it to the result */
 
 	// if(!racy.isInitializer()){
 	// 	reportRace(lab->getPos(), racy);
@@ -2432,6 +2432,26 @@ void GenMCDriver::reportRaces(Event pos, std::vector<Event> &races)
 
 	getEE()->replayExecutionBefore(getReplayView());
 
+	if(getConf()->stoponFirstRaceDetection){
+		llvm::raw_string_ostream out(result.message);
+		out << "Error detected: " << "Race Detected" << "!\n";
+		out << "Event " << errLab->getPos() << " ";
+		out << "conflicts with events \n";
+		for(auto &confEvent : races)
+			out << confEvent << "\n";
+		out << "in graph:\n";
+		printGraph(true, out);
+
+		// /* Dump the graph into a file (DOT format) */
+		// if (getConf()->dotFile != "")
+		// 	dotPrintToFile(getConf()->dotFile, errLab->getPos(), confEvent);
+
+		getEE()->restoreLocalState(std::move(oldState));
+
+		halt(Status::VS_RaceNotAtomic);
+
+		return;
+	}
 	// WARN("Racey ( " + to_string(pos.thread) + ","+ to_string(pos.index) + ")\n");
 	for(auto &confEvent : races){
 		const EventLabel *raceLab1 = g.getEventLabel(pos);
@@ -2481,10 +2501,6 @@ void GenMCDriver::reportRaces(Event pos, std::vector<Event> &races)
 	
 	getEE()->restoreLocalState(std::move(oldState));
 
-	// llvm::raw_string_ostream out(result.message);
-	// out << "Error detected: " << Status::VS_RaceNotAtomic << "!\n";
-	// out << "Event " << errLab->getPos() << " ";
-	// halt(Status::VS_RaceNotAtomic);
 }
 
 void GenMCDriver::visitError(Event pos, Status s, const std::string &err /* = "" */,

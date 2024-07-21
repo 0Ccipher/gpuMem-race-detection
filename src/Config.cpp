@@ -116,6 +116,10 @@ clDisableRaceDetection("disable-race-detection", llvm::cl::cat(clGeneral),
 		     llvm::cl::desc("Disable race detection"));
 
 static llvm::cl::opt<bool>
+clStoponFirstRaceDetection("stop-on-race", llvm::cl::cat(clGeneral),
+		     llvm::cl::desc("Stop exploration after first race detection"));
+
+static llvm::cl::opt<bool>
 clDisableBAM("disable-bam", llvm::cl::cat(clGeneral),
 	     llvm::cl::desc("Disable optimized barrier handling (BAM)"));
 static llvm::cl::opt<bool>
@@ -344,6 +348,7 @@ void Config::saveConfigOptions()
 	checkConsPoint = (LAPOR ? ProgramPoint::step : clCheckConsPoint);
 	checkLiveness = clCheckLiveness;
 	disableRaceDetection = clDisableRaceDetection;
+	stoponFirstRaceDetection = clStoponFirstRaceDetection;
 	disableBAM = clDisableBAM;
 	disableStopOnSystemError = clDisableStopOnSystemError;
 

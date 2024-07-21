@@ -54,6 +54,7 @@ public:
 	bool printErrorTrace;
 	std::string dotFile;
 	bool disableRaceDetection;
+	bool stoponFirstRaceDetection;
 	bool disableBAM;
 	bool disableStopOnSystemError;
 
