@@ -7,7 +7,7 @@
 #include <limits.h>
 
 #define sc memory_order_seq_cst
-
+#define RACEY
 #define NBLOCKS 2
 #define NTHREADS 1
 
@@ -49,8 +49,8 @@ void __VERIFIER_groupsize(int localWorkSize)    ;
  * (u, v) is an edge in the graph
  *
  *************************************************/
-#define Edges 3
-#define vertices 4
+#define Edges 2
+#define vertices 3
 atomic_int V=vertices;
 atomic_int E=Edges;
 atomic_int edgeSetU[Edges];
@@ -66,29 +66,29 @@ pthread_barrier_t barg[GROUPS];
 
 void input(){
     __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetU[0],1);
+    atomic_init(&edgeSetU[0],0);
     __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetV[0],2);
+    atomic_init(&edgeSetV[0],1);
     __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetU[1],1);
+    atomic_init(&edgeSetU[1],0);
     __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetV[1],3);
-     __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetU[2],2);
-    __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetV[2],3);
+    atomic_init(&edgeSetV[1],2);
     //  __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetU[3],3);
+    // atomic_init(&edgeSetU[2],1);
     // __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetV[3],4);
+    // atomic_init(&edgeSetV[2],2);
     //  __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetU[4],4);
+    // atomic_init(&edgeSetU[3],2);
     // __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetV[4],5);
+    // atomic_init(&edgeSetV[3],3);
     //  __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetU[5],5);
+    // atomic_init(&edgeSetU[4],3);
     // __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetV[5],6);
+    // atomic_init(&edgeSetV[4],4);
+    //  __VERIFIER_memory_scope_device();
+    // atomic_init(&edgeSetU[5],4);
+    // __VERIFIER_memory_scope_device();
+    // atomic_init(&edgeSetV[5],5);
     
 }
 
@@ -540,9 +540,19 @@ void *kernel1( void *arg) {
     __VERIFIER_thread_global_id(global_id);
     __VERIFIER_thread_local_id(local_id);
     __VERIFIER_thread_group_id(group_id);
-    __VERIFIER_thread_kernel_id(kernel_id);
-    
-    divideWork(NBLOCKS, V);
+    __VERIFIER_thread_kernel_id(0);
+
+    // __VERIFIER_memory_scope_device();
+    // int rc = pthread_barrier_wait(&bard);
+    // if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        
+    //     printf("Could not wait on barrier\n");
+    //     pthread_exit(NULL);
+    // }
+    //step 0
+    if(group_id == -10){
+            divideWork(NBLOCKS, V);
+    }
     __VERIFIER_memory_scope_device();
     int rc = pthread_barrier_wait(&bard);
     if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
@@ -550,40 +560,60 @@ void *kernel1( void *arg) {
         printf("Could not wait on barrier\n");
         pthread_exit(NULL);
     }
-    initKernel(global_id, group_id , local_id , kernel_id);
-    __VERIFIER_memory_scope_device();
-    rc = pthread_barrier_wait(&bard);
-    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-        
-        printf("Could not wait on barrier\n");
-        pthread_exit(NULL);
-    }
-    divideWork(NBLOCKS, E);
-    __VERIFIER_memory_scope_device();
-    rc = pthread_barrier_wait(&bard);
-    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-        
-        printf("Could not wait on barrier\n");
-        pthread_exit(NULL);
-    }
-    linkKernel(global_id, group_id , local_id , kernel_id);
-    __VERIFIER_memory_scope_device();
-    rc = pthread_barrier_wait(&bard);
-    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-        
-        printf("Could not wait on barrier\n");
-        pthread_exit(NULL);
-    }
-    divideWork(NBLOCKS, V);
-    __VERIFIER_memory_scope_device();
-    rc = pthread_barrier_wait(&bard);
-    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-        
-        printf("Could not wait on barrier\n");
-        pthread_exit(NULL);
-    }
-    compressKernel(global_id, group_id , local_id , kernel_id);
 
+    if(group_id != -10){initKernel(global_id, group_id , local_id , kernel_id);}
+    
+    __VERIFIER_memory_scope_device();
+    rc = pthread_barrier_wait(&bard);
+    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        
+        printf("Could not wait on barrier\n");
+        pthread_exit(NULL);
+    }
+
+    //step 2
+    if(group_id == -10){
+            divideWork(NBLOCKS, E);
+    }
+    __VERIFIER_memory_scope_device();
+    rc = pthread_barrier_wait(&bard);
+    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        
+        printf("Could not wait on barrier\n");
+        pthread_exit(NULL);
+    }
+
+    if(group_id != -10){linkKernel(global_id, group_id , local_id , kernel_id);}
+
+    __VERIFIER_memory_scope_device();
+    rc = pthread_barrier_wait(&bard);
+    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        
+        printf("Could not wait on barrier\n");
+        pthread_exit(NULL);
+    }
+    
+    //step 3
+    if(group_id == -10){
+            divideWork(NBLOCKS, V);
+    }
+    __VERIFIER_memory_scope_device();
+    rc = pthread_barrier_wait(&bard);
+    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        
+        printf("Could not wait on barrier\n");
+        pthread_exit(NULL);
+    }
+
+    if(group_id != -10){compressKernel(global_id, group_id , local_id , kernel_id);}
+
+    // __VERIFIER_memory_scope_device();
+    // int rc = pthread_barrier_wait(&bard);
+    // if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+        
+    //     printf("Could not wait on barrier\n");
+    //     pthread_exit(NULL);
+    // }
     // printf("total components , TODO\n");
     return NULL;
 }
@@ -601,13 +631,13 @@ int main(int argc, char **argv){
     __VERIFIER_groupsize(localWorkSize);
 
     /* Barrier initialization */
-	if (pthread_barrier_init(&bard, NULL, globalWorkSize)) {
+	if (pthread_barrier_init(&bard, NULL, globalWorkSize+1)) {
 		printf("Could not create a barrier\n");
 		return -1;
 	}
 
-  	pthread_t workItems[totalThreads];
-    struct ThreadData workItemInfo[totalThreads];
+  	pthread_t workItems[totalThreads+1];
+    struct ThreadData workItemInfo[totalThreads+1];
 
     int groups = globalWorkSize / localWorkSize;
     int left = globalWorkSize % localWorkSize;
@@ -642,9 +672,15 @@ int main(int argc, char **argv){
         tcount++;
     }
 
+    //special thread
+     workItemInfo[tcount].local_id = -1, workItemInfo[tcount].group_id = -10, 
+            workItemInfo[tcount].global_id = -1, workItemInfo[tcount].kernel_id = 0;
+        pthread_create(&workItems[tcount], NULL, kernel1, (void *)&workItemInfo[tcount]);
+
     //joinall
-    for(int i=0 ; i < tcount ; i++){
+    for(int i=0 ; i < tcount+1 ; i++){
         pthread_join(workItems[i] , NULL);
     }
+
   return 0;
 }

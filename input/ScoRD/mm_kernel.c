@@ -8,8 +8,8 @@
 
 #define sc memory_order_seq_cst
 
-#define NBLOCKS 2
-#define NTHREADS 1
+#define NBLOCKS 3
+#define NTHREADS 2
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
@@ -54,10 +54,10 @@ pthread_barrier_t barg[GROUPS];
  *
  * All in row-major format
  ***************************************************/
-#define WARP_SIZE 1
-#define ca 2
-#define ra 2
-#define cb 2
+#define WARP_SIZE 2
+#define ca 3
+#define ra 3
+#define cb 3
 
 atomic_int rA=ra;
 atomic_int cA=ca;

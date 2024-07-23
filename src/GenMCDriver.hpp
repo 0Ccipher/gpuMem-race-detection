@@ -87,7 +87,7 @@ public:
 		unsigned explored;        /* Number of complete executions explored */
 		unsigned exploredBlocked; /* Number of blocked executions explored */
 		unsigned exploredMoot;
-		std::set<std::pair<int,int>> races; /*Stores the races*/
+		std::map<std::pair<int,int>,std::string> races; /*Stores the races*/
 		unsigned racecount;
 #ifdef ENABLE_GENMC_DEBUG
 		unsigned duplicates;      /* Number of duplicate executions explored */

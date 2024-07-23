@@ -9,7 +9,7 @@
 #define sc memory_order_seq_cst
 
 #define NBLOCKS 2
-#define NTHREADS 1
+#define NTHREADS 2
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
@@ -46,8 +46,8 @@ pthread_barrier_t barg[GROUPS];
 #define WARP_SIZE (NTHREADS < 32 ? NTHREADS : 32)
 #define NTHREADS_TOT  (NBLOCKS * NTHREADS)
 
-#define fsize 2
-#define arrsize 4
+#define fsize 4
+#define arrsize 6
 atomic_int filter[fsize];
 atomic_int filterSize = fsize;
 atomic_int array[arrsize];
@@ -144,13 +144,13 @@ void *kernel1( void *arg) {
     __VERIFIER_thread_kernel_id(kernel_id);
     
     initKernel(global_id, group_id , local_id , kernel_id);
-    // __VERIFIER_memory_scope_device();
-    // int rc = pthread_barrier_wait(&bard);
-    // if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
+    __VERIFIER_memory_scope_device();
+    int rc = pthread_barrier_wait(&bard);
+    if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
         
-    //     printf("Could not wait on barrier\n");
-    //     pthread_exit(NULL);
-    // }
+        printf("Could not wait on barrier\n");
+        pthread_exit(NULL);
+    }
     convolveKernel(global_id, group_id , local_id , kernel_id);
     // printf("total components , TODO\n");
     return NULL;

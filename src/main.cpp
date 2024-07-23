@@ -100,8 +100,9 @@ void printResults(const std::shared_ptr<const Config> &conf,
 		llvm::outs() << "\nRaces Detected: ";
 		if(!res.races.empty())
 		for(auto it=res.races.begin() ; it != res.races.end() ; it++){
-			llvm::outs() << "\n\tL." << it->first;
-			llvm::outs() << "\tL." << it->second;
+			llvm::outs() << "\n\t[L." << it->first.first;
+			llvm::outs() << "\tL." << it->first.second << "]-";
+			llvm::outs() << it->second;
 			
 		}
 	}

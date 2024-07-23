@@ -2364,6 +2364,10 @@ void GenMCDriver::reportRace(Event pos, Event confEvent /* = INIT */)
 	else{
 		e2 = confEvent;
 	}
+	string scope1 = raceLab1->getScope()==1? "DV" : "WG";
+	scope1 = (raceLab1->getScope()==3 && scope1!="DV")? "SYS" : "WG";
+	string scope2 = raceLab2->getScope()==1? "DV" : "WG";
+	scope2 = (raceLab2->getScope()==3 && scope2!="DV")? "SYS" : "WG";
 	string s1 = (llvm::isa<WriteLabel>(raceLab1))? "Wr":"Rd";
 	string s2 = (llvm::isa<WriteLabel>(raceLab2))? "Wr":"Rd";
 	WARN("Racey "+s1+"( " + to_string(pos.thread) + ","+ to_string(pos.index) + "), "+s2+"(" 
@@ -2385,7 +2389,7 @@ void GenMCDriver::reportRace(Event pos, Event confEvent /* = INIT */)
 				return;
 			if(result.races.find(std::make_pair(pair1.first,pair2.first)) == result.races.end() 
 				&& result.races.find(std::make_pair(pair2.first,pair1.first)) == result.races.end()) {
-				result.races.insert(std::make_pair(pair1.first,pair2.first));
+				result.races[std::make_pair(pair1.first,pair2.first)]="["+scope1+","+scope2+"]";
 				WARN("Report Race (L. " + to_string(pair1.first) + ", L." + to_string(pair2.first)+")\n");
 				++result.racecount;
 			}
@@ -2432,26 +2436,6 @@ void GenMCDriver::reportRaces(Event pos, std::vector<Event> &races)
 
 	getEE()->replayExecutionBefore(getReplayView());
 
-	if(getConf()->stoponFirstRaceDetection){
-		llvm::raw_string_ostream out(result.message);
-		out << "Error detected: " << "Race Detected" << "!\n";
-		out << "Event " << errLab->getPos() << " ";
-		out << "conflicts with events \n";
-		for(auto &confEvent : races)
-			out << confEvent << "\n";
-		out << "in graph:\n";
-		printGraph(true, out);
-
-		// /* Dump the graph into a file (DOT format) */
-		// if (getConf()->dotFile != "")
-		// 	dotPrintToFile(getConf()->dotFile, errLab->getPos(), confEvent);
-
-		getEE()->restoreLocalState(std::move(oldState));
-
-		halt(Status::VS_RaceNotAtomic);
-
-		return;
-	}
 	// WARN("Racey ( " + to_string(pos.thread) + ","+ to_string(pos.index) + ")\n");
 	for(auto &confEvent : races){
 		const EventLabel *raceLab1 = g.getEventLabel(pos);
@@ -2470,6 +2454,10 @@ void GenMCDriver::reportRaces(Event pos, std::vector<Event> &races)
 		else{
 			e2 = confEvent;
 		}
+		string scope1 = raceLab1->getScope()==1? "DV" : "WG";
+		scope1 = (raceLab1->getScope()==3 && scope1!="DV")? "SYS" : "WG";
+		string scope2 = raceLab2->getScope()==1? "DV" : "WG";
+		scope2 = (raceLab2->getScope()==3 && scope2!="DV")? "SYS" : "WG";
 		string s1 = (llvm::isa<WriteLabel>(raceLab1))? "Wr":"Rd";
 		string s2 = (llvm::isa<WriteLabel>(raceLab2))? "Wr":"Rd";
 		// WARN("Racey "+s1+"( " + to_string(pos.thread) + ","+ to_string(pos.index) + "), "+s2+"(" 
@@ -2491,12 +2479,32 @@ void GenMCDriver::reportRaces(Event pos, std::vector<Event> &races)
 					return;
 				if(result.races.find(std::make_pair(pair1.first,pair2.first)) == result.races.end() 
 					&& result.races.find(std::make_pair(pair2.first,pair1.first)) == result.races.end()) {
-					result.races.insert(std::make_pair(pair1.first,pair2.first));
-					// WARN("Report Race (L. " + to_string(pair1.first) + ", L." + to_string(pair2.first)+")\n");
+					result.races[std::make_pair(pair1.first,pair2.first)]="["+scope1+","+scope2+"]";
+					WARN("Reporting Race (L. " + to_string(pair1.first) + ", L." + to_string(pair2.first)+")\n");
 					++result.racecount;
 				}
 			}
 		}
+	}
+	if(getConf()->stoponFirstRaceDetection){
+		llvm::raw_string_ostream out(result.message);
+		out << "Error detected: " << "Race Detected" << "!\n";
+		out << "Event " << errLab->getPos() << " ";
+		out << "conflicts with events \n";
+		for(auto &confEvent : races)
+			out << confEvent << "\n";
+		out << "in graph:\n";
+		printGraph(true, out);
+
+		// /* Dump the graph into a file (DOT format) */
+		// if (getConf()->dotFile != "")
+		// 	dotPrintToFile(getConf()->dotFile, errLab->getPos(), confEvent);
+
+		getEE()->restoreLocalState(std::move(oldState));
+
+		halt(Status::VS_RaceNotAtomic);
+
+		return;
 	}
 	
 	getEE()->restoreLocalState(std::move(oldState));
