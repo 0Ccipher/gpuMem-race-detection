@@ -7,14 +7,14 @@
 
 #define sc memory_order_seq_cst
 
-#define NBLOCKS 3
-#define NTHREADS 3
+#define NBLOCKS 4
+#define NTHREADS 2
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
 #define GLOBAL_WORK_OFFSET 0
 
-#define GROUPS ((WORK_ITEMS_PER_KERNEL / WORK_ITEMS_PER_GROUP)+1)
+#define GROUPS NBLOCKS
 
 struct ThreadData;
 
@@ -42,6 +42,11 @@ struct ThreadData
 pthread_barrier_t bard;
 pthread_barrier_t barg[GROUPS];
 
+// #define FAIL1
+// #define FAIL2
+// #define FAIL3
+// #define FAIL4
+
 #ifdef FAIL1
 #define mo1 memory_order_relaxed
 #else
@@ -67,45 +72,33 @@ pthread_barrier_t barg[GROUPS];
 #endif
 
 atomic_int flag[] = {0, 0, 0, 0, 0, 0, 0, 0};
-int in[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  
-int out[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int in[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  
+int out[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
  void xf_barrier(int global_id, int group_id, int local_id, int kernel_id) {
     unsigned int num_groups = NBLOCKS;
 
     unsigned int _id = global_id;
-    unsigned int _size = NBLOCKS * NTHREADS;
+    unsigned int global_size = NBLOCKS * NTHREADS;
 
     __VERIFIER_memory_scope_system();
-    in[_id] = 1;
+    in[global_id] = 1;
 
     if (group_id == 0) {
         if (local_id + 1 < num_groups) {
-            // __VERIFIER_memory_scope_device();
-            // while (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){};
             __VERIFIER_memory_scope_device();
-            if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                 __VERIFIER_memory_scope_device();
-                if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                    __VERIFIER_memory_scope_device();
-                    if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                        __VERIFIER_memory_scope_device();
-                        if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                            if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                                if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                                    if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                                        if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                                            if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            while (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){};
+            // __VERIFIER_memory_scope_device();
+            // if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
+            //      __VERIFIER_memory_scope_device();
+            //     if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
+            //         __VERIFIER_memory_scope_device();
+            //         if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
+            //             __VERIFIER_memory_scope_device();
+            //             if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){return;};
+            //         }
+            //     }
+            // }
            
             
         }
@@ -131,42 +124,19 @@ int out[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         if (local_id == 0) {
             __VERIFIER_memory_scope_device();
             atomic_store_explicit(&flag[group_id], 1, mo3);
-            // __VERIFIER_memory_scope_device();
-            // while (atomic_load_explicit(&flag[group_id], mo4) == 1){};
+            __VERIFIER_memory_scope_device();
+            while (atomic_load_explicit(&flag[group_id], mo4) == 1){};
             //  __VERIFIER_memory_scope_device();
-            // if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
+            // if (atomic_load_explicit(&flag[group_id], mo1) == 1){
             //      __VERIFIER_memory_scope_device();
-            //     if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
+            //     if (atomic_load_explicit(&flag[group_id], mo1) == 1){
             //         __VERIFIER_memory_scope_device();
-            //         if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
+            //         if (atomic_load_explicit(&flag[group_id], mo1) == 1){
             //             __VERIFIER_memory_scope_device();
-            //             if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){};
+            //             if (atomic_load_explicit(&flag[group_id], mo1) == 1){return;};
             //         }
             //     }
             // }
-            __VERIFIER_memory_scope_device();
-            if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                 __VERIFIER_memory_scope_device();
-                if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                    __VERIFIER_memory_scope_device();
-                    if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                        __VERIFIER_memory_scope_device();
-                        if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                            if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                                if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                                    if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                                        if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-                                            if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
 
         }
         // barrier(CLK__MEM_FENCE);
@@ -177,8 +147,9 @@ int out[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
             pthread_exit(NULL);
         }
     }
+
     __VERIFIER_memory_scope_system();
-    for (unsigned int i = 0; i < _size; i++) {
+    for (unsigned int i = 0; i < global_size; i++) {
         out[_id] += in[i];
     }
 }
@@ -194,25 +165,34 @@ void *kernel01(void *arg) {
     return NULL;
 }
 
-void *kernel02(void *arg) {
-    xf_barrier(2, 0, 2, 0);
-    return NULL;
-}
-
 void *kernel10(void *arg) {
-    xf_barrier(3, 1, 0, 0);
+    xf_barrier(2, 1, 0, 0);
     return NULL;
 }
+
 void *kernel11(void *arg) {
-    xf_barrier(4, 1, 1, 0);
+    xf_barrier(3, 1, 1, 0);
+    return NULL;
+}
+void *kernel20(void *arg) {
+    xf_barrier(4, 2, 0, 0);
     return NULL;
 }
 
-void *kernel12(void *arg) {
-    xf_barrier(5, 1, 2, 0);
+void *kernel21(void *arg) {
+    xf_barrier(5, 2, 1, 0);
     return NULL;
 }
 
+void *kernel30(void *arg) {
+    xf_barrier(6, 3, 0, 0);
+    return NULL;
+}
+
+void *kernel31(void *arg) {
+    xf_barrier(7, 3, 1, 0);
+    return NULL;
+}
 int main(int argc, char **argv){
 
     int globalWorkSize = WORK_ITEMS_PER_KERNEL;
@@ -233,18 +213,18 @@ int main(int argc, char **argv){
         printf("Could not create a barrier\n");
         return -1;
     }
-    // if (pthread_barrier_init(&barg[3], NULL, 2)) {
-    //     printf("Could not create a barrier\n");
-    //     return -1;
-    // }
+    if (pthread_barrier_init(&barg[3], NULL, 2)) {
+        printf("Could not create a barrier\n");
+        return -1;
+    }
     pthread_create(&workItems[0], NULL, kernel00,  NULL);
     pthread_create(&workItems[1], NULL, kernel01,  NULL);
     pthread_create(&workItems[2], NULL, kernel10, NULL);
     pthread_create(&workItems[3], NULL, kernel11, NULL);
-    pthread_create(&workItems[4], NULL, kernel02, NULL);
-    pthread_create(&workItems[5], NULL, kernel12, NULL);
-    // pthread_create(&workItems[6], NULL, kernel30, NULL);
-    // pthread_create(&workItems[7], NULL, kernel31, NULL);
+    pthread_create(&workItems[4], NULL, kernel20, NULL);
+    pthread_create(&workItems[5], NULL, kernel21, NULL);
+    pthread_create(&workItems[6], NULL, kernel30, NULL);
+    pthread_create(&workItems[7], NULL, kernel31, NULL);
 
 
     //joinall
