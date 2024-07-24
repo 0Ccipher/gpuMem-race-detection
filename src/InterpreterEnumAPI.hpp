@@ -20,7 +20,6 @@
 
 #ifndef __INTERPRETER_ENUM_API_HPP__
 #define __INTERPRETER_ENUM_API_HPP__
-
 #include <llvm/Support/raw_ostream.h>
 #include <config.h>
 #include <string>

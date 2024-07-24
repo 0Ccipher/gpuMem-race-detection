@@ -264,6 +264,9 @@ public:
 			printVal(valFun(lab), lab.getType());
 		}
 		out << ")";
+		if(lab.getGroupId() != -1){
+			out << "-[ " << lab.getKernelId() << ", " << lab.getGroupId() << ", " << lab.getScope() <<" ]";
+		}
 	}
 
 	void visitWriteLabel(const WriteLabel &lab) {
