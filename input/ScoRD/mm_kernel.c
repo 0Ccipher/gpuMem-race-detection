@@ -6,6 +6,8 @@
 #include <limits.h>
 #include <stdbool.h>
 
+#define RACEY
+
 #define sc memory_order_seq_cst
 
 #define NBLOCKS 3

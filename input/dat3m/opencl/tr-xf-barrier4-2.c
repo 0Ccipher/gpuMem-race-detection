@@ -88,19 +88,6 @@ int out[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         if (local_id + 1 < num_groups) {
             __VERIFIER_memory_scope_device();
             while (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){};
-            // __VERIFIER_memory_scope_device();
-            // if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-            //      __VERIFIER_memory_scope_device();
-            //     if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-            //         __VERIFIER_memory_scope_device();
-            //         if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-            //             __VERIFIER_memory_scope_device();
-            //             if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){return;};
-            //         }
-            //     }
-            // }
-           
-            
         }
         // barrier(CLK__MEM_FENCE);
         __VERIFIER_memory_scope_work_group();
@@ -126,18 +113,6 @@ int out[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
             atomic_store_explicit(&flag[group_id], 1, mo3);
             __VERIFIER_memory_scope_device();
             while (atomic_load_explicit(&flag[group_id], mo4) == 1){};
-            //  __VERIFIER_memory_scope_device();
-            // if (atomic_load_explicit(&flag[group_id], mo1) == 1){
-            //      __VERIFIER_memory_scope_device();
-            //     if (atomic_load_explicit(&flag[group_id], mo1) == 1){
-            //         __VERIFIER_memory_scope_device();
-            //         if (atomic_load_explicit(&flag[group_id], mo1) == 1){
-            //             __VERIFIER_memory_scope_device();
-            //             if (atomic_load_explicit(&flag[group_id], mo1) == 1){return;};
-            //         }
-            //     }
-            // }
-
         }
         // barrier(CLK__MEM_FENCE);
         __VERIFIER_memory_scope_work_group();
@@ -193,6 +168,7 @@ void *kernel31(void *arg) {
     xf_barrier(7, 3, 1, 0);
     return NULL;
 }
+
 int main(int argc, char **argv){
 
     int globalWorkSize = WORK_ITEMS_PER_KERNEL;

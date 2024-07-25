@@ -7,7 +7,9 @@
 #include <limits.h>
 
 #define sc memory_order_seq_cst
+
 #define RACEY
+
 #define NBLOCKS 2
 #define NTHREADS 1
 

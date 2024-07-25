@@ -38,8 +38,10 @@ struct ThreadData
     int kernel_id;
 };
 
-// pthread_barrier_t bard;
-// pthread_barrier_t barg[GROUPS];
+pthread_barrier_t bard;
+pthread_barrier_t barg[GROUPS];
+
+#define REL2RX
 
 #ifdef ACQ2RX
 #define mo_lock memory_order_relaxed
@@ -58,40 +60,43 @@ struct ThreadData
 #define scope memory_scope_device
 #endif
 
-atomic_int owner=0;
-atomic_int next=0;
+atomic_int l=0;
 int x=0;
 int A[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
- void lock( ) {
-#ifdef DV2WG
-       __VERIFIER_memory_scope_work_group();
-#else
-      __VERIFIER_memory_scope_device();
-#endif
-    int ticket = atomic_fetch_add_explicit(&next, 1, memory_order_relaxed);
-    while (atomic_load_explicit(&owner, mo_lock) != ticket) {}
-}
+// static void lock() {
+//       int e = 0;
 
- void unlock() {
-#ifdef DV2WG
-       __VERIFIER_memory_scope_work_group();
-#else
-      __VERIFIER_memory_scope_device();
-#endif
-    int current = atomic_load_explicit(&owner, memory_order_relaxed);
-    atomic_store_explicit(&owner, current + 1, mo_unlock);
-}
+// #ifdef DV2WG
+//        __VERIFIER_memory_scope_work_group();
+// #else
+//       __VERIFIER_memory_scope_device();
+// #endif
+//     while (atomic_compare_exchange_strong_explicit(&l, &e, 1, mo_lock, mo_lock) == 0) {
+//         e = 0;}
+// }
+
+// static void unlock() {
+// #ifdef DV2WG
+//        __VERIFIER_memory_scope_work_group();
+// #else
+//       __VERIFIER_memory_scope_device();
+// #endif
+//     atomic_store_explicit(&l, 0, mo_unlock);
+// }
+
 void mutex_test(int global_id, int group_id, int local_id, int kernel_id) {
-    int a;
+    int a=0;
+    int e=0;
     // lock();
 #ifdef DV2WG
        __VERIFIER_memory_scope_work_group();
 #else
       __VERIFIER_memory_scope_device();
 #endif
-    int ticket = atomic_fetch_add_explicit(&next, 1, memory_order_relaxed);
-    while (atomic_load_explicit(&owner, mo_lock) != ticket) {}
+     while (atomic_compare_exchange_strong_explicit(&l, &e, 1, mo_lock, mo_lock) == 0) {
+        e = 0;
+    }
     __VERIFIER_memory_scope_system();
     a = x;
     __VERIFIER_memory_scope_system();
@@ -102,11 +107,10 @@ void mutex_test(int global_id, int group_id, int local_id, int kernel_id) {
 #else
       __VERIFIER_memory_scope_device();
 #endif
-    int current = atomic_load_explicit(&owner, memory_order_relaxed);
-    atomic_store_explicit(&owner, current + 1, mo_unlock);
+    atomic_store_explicit(&l, 0, mo_unlock);
     __VERIFIER_memory_scope_system();
     A[global_id] = a;
-} 
+}
 
 void *kernel00(void *arg) {
     mutex_test(0, 0, 0, 0);

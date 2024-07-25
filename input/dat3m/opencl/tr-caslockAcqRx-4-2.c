@@ -7,7 +7,7 @@
 
 #define sc memory_order_seq_cst
 
-#define NBLOCKS 2
+#define NBLOCKS 4
 #define NTHREADS 2
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
@@ -21,7 +21,7 @@ struct ThreadData;
 //  also track the work-item offset in clEnqueueNDRangeKernel()
 void __VERIFIER_memory_scope_work_group()       ;
 void __VERIFIER_memory_scope_device()           ;
-void     __VERIFIER_memory_scope_system()       ;
+void __VERIFIER_memory_scope_system()           ;
 void __VERIFIER_thread__id(int a)         ;
 void __VERIFIER_thread_local_id(int a)          ;
 void __VERIFIER_thread_group_id(int a)          ;
@@ -40,6 +40,8 @@ struct ThreadData
 
 pthread_barrier_t bard;
 pthread_barrier_t barg[GROUPS];
+
+#define ACQ2RX
 
 #ifdef ACQ2RX
 #define mo_lock memory_order_relaxed
@@ -62,45 +64,39 @@ atomic_int l=0;
 int x=0;
 int A[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-static void lock() {
-#ifdef DV2WG
-       __VERIFIER_memory_scope_work_group();
-#else
-      __VERIFIER_memory_scope_device();
-#endif
-    while(1) {
-        while (atomic_load_explicit(&l, memory_order_relaxed) != 0) {}
-        if(!atomic_exchange_explicit(&l, 1, mo_lock)) {
-            return;
-        }
-    }
-}
+// static void lock() {
+//       int e = 0;
 
-static void unlock() {
-#ifdef DV2WG
-       __VERIFIER_memory_scope_work_group();
-#else
-      __VERIFIER_memory_scope_device();
-#endif
-    atomic_store_explicit(&l, 0, mo_unlock);
-}
+// #ifdef DV2WG
+//        __VERIFIER_memory_scope_work_group();
+// #else
+//       __VERIFIER_memory_scope_device();
+// #endif
+//     while (atomic_compare_exchange_strong_explicit(&l, &e, 1, mo_lock, mo_lock) == 0) {
+//         e = 0;}
+// }
+
+// static void unlock() {
+// #ifdef DV2WG
+//        __VERIFIER_memory_scope_work_group();
+// #else
+//       __VERIFIER_memory_scope_device();
+// #endif
+//     atomic_store_explicit(&l, 0, mo_unlock);
+// }
 
 void mutex_test(int global_id, int group_id, int local_id, int kernel_id) {
-    int a;
+    int a=0;
+    int e=0;
     // lock();
 #ifdef DV2WG
        __VERIFIER_memory_scope_work_group();
 #else
       __VERIFIER_memory_scope_device();
 #endif
-    while(1) {
-        while (atomic_load_explicit(&l, memory_order_relaxed) != 0) {}
-        if(!atomic_exchange_explicit(&l, 1, mo_lock)) {
-            // return;
-            goto CS;
-        }
+     while (atomic_compare_exchange_strong_explicit(&l, &e, 1, mo_lock, mo_lock) == 0) {
+        e = 0;
     }
-    CS:
     __VERIFIER_memory_scope_system();
     a = x;
     __VERIFIER_memory_scope_system();
@@ -112,10 +108,9 @@ void mutex_test(int global_id, int group_id, int local_id, int kernel_id) {
       __VERIFIER_memory_scope_device();
 #endif
     atomic_store_explicit(&l, 0, mo_unlock);
-
     __VERIFIER_memory_scope_system();
     A[global_id] = a;
-} 
+}
 
 void *kernel00(void *arg) {
     mutex_test(0, 0, 0, 0);
@@ -168,10 +163,10 @@ int main(int argc, char **argv){
     pthread_create(&workItems[1], NULL, kernel01,  NULL);
     pthread_create(&workItems[2], NULL, kernel10, NULL);
     pthread_create(&workItems[3], NULL, kernel11, NULL);
-    // pthread_create(&workItems[4], NULL, kernel20, NULL);
-    // pthread_create(&workItems[5], NULL, kernel21, NULL);
-    // pthread_create(&workItems[6], NULL, kernel30, NULL);
-    // pthread_create(&workItems[7], NULL, kernel31, NULL);
+    pthread_create(&workItems[4], NULL, kernel20, NULL);
+    pthread_create(&workItems[5], NULL, kernel21, NULL);
+    pthread_create(&workItems[6], NULL, kernel30, NULL);
+    pthread_create(&workItems[7], NULL, kernel31, NULL);
 
 
     //joinall

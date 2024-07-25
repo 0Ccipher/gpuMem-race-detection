@@ -58,9 +58,9 @@ Manual/SB+sc-gpu,0
 Manual/SB+sc-cta-outScope,1
 Manual/SB+sc-cta,0
 Manual/SB+bar-reg-equal,1
-Manual/SB+bar-reg-diff,1
+Manual/SB+bar-reg-diff,0
 Manual/SB+bar-reg-const-equal,1
-Manual/SB+bar-reg-const-diff,1
+Manual/SB+bar-reg-const-diff,0
 Manual/SB+bar-diff-cta,1
 Manual/SB+bar-const-equal,0
 Manual/SB+bar-const-diff,1

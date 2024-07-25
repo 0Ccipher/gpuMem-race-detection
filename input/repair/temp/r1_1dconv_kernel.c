@@ -111,7 +111,7 @@ void convolveKernel(int global_id, int group_id, int local_id, int kernel_id)
                 int filteri = filter[filterIndex];
                 __VERIFIER_memory_scope_device();
 #ifdef RACEY
-                __VERIFIER_memory_scope_work_group();
+                __VERIFIER_memory_scope_device();
                 atomic_fetch_add(&output[outputIndex], arri * filteri);
 #else
                 // Only this block's threads are writing to location
