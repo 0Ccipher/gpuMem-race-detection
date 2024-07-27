@@ -322,13 +322,13 @@ void divideWork(int size, int value)
 
             __VERIFIER_memory_scope_device();
             if(colorSet[U] == colorSet[V] && 
-                atomic_fetch_add(&vertexColor[U], 0) == atomic_fetch_add(&vertexColor[V], 0)) {
+                atomic_fetch_add_explicit(&vertexColor[U], 0,sc) == atomic_fetch_add_explicit(&vertexColor[V], 0,sc),sc) {
                 __VERIFIER_memory_scope_device();
-                atomic_exchange(&vertexColor[U], 0);
+                atomic_exchange_explicit(&vertexColor[U], 0,sc);
             }
             __VERIFIER_memory_scope_device();
-            if(atomic_fetch_add(&vertexColor[U], 0) == 0 || atomic_fetch_add(&vertexColor[V], 0) == 0) {
-                atomic_exchange(&complete, 0);
+            if(atomic_fetch_add_explicit(&vertexColor[U], 0,sc) == 0 || atomic_fetch_add_explicit(&vertexColor[V], 0,sc) == 0) {
+                atomic_exchange_explicit(&complete, 0,sc);
             }
         }
         /* Synchronize */
@@ -343,10 +343,10 @@ void divideWork(int size, int value)
 #ifdef RACEY
             //*base = atomicAdd_block(&head[bid], NTHREADS);
             __VERIFIER_memory_scope_work_group();
-            *base = atomic_fetch_add(&head[bid], NTHREADS);       
+            *base = atomic_fetch_add_explicit(&head[bid], NTHREADS,sc);       
 #else
             __VERIFIER_memory_scope_device();
-            *base = atomic_fetch_add(&head[bid], NTHREADS);
+            *base = atomic_fetch_add_explicit(&head[bid], NTHREADS,sc);
             
 #endif
         }
@@ -382,7 +382,7 @@ void divideWork(int size, int value)
                 block < (bid + NBLOCKS); block++) {
                 otherBlock = block % NBLOCKS;
                 __VERIFIER_memory_scope_device();
-                int h = atomic_fetch_add(&head[otherBlock], 0);
+                int h = atomic_fetch_add_explicit(&head[otherBlock], 0,sc);
                 __VERIFIER_memory_scope_device();
                 int t = tail[otherBlock];
                 if ((h + NTHREADS) < t) {
@@ -390,7 +390,7 @@ void divideWork(int size, int value)
                 }
             }
             __VERIFIER_memory_scope_device();
-            *base = atomic_fetch_add(&head[otherBlock], NTHREADS);
+            *base = atomic_fetch_add_explicit(&head[otherBlock], NTHREADS,sc);
             __VERIFIER_memory_scope_work_group();
             atomic_exchange_explicit(blockId, otherBlock,sc);
         }
@@ -473,10 +473,10 @@ void divideWork(int size, int value)
         if(tid == 0) {
 #ifdef RACEY
             __VERIFIER_memory_scope_work_group();
-            *base = atomic_fetch_add(&head[bid], NTHREADS);
+            *base = atomic_fetch_add_explicit(&head[bid], NTHREADS,sc);
 #else
             __VERIFIER_memory_scope_device();
-            *base = atomic_fetch_add(&head[bid], NTHREADS);
+            *base = atomic_fetch_add_explicit(&head[bid], NTHREADS,sc);
 #endif
         }
 #ifdef RACEY
@@ -511,7 +511,7 @@ void divideWork(int size, int value)
                 block < (bid + NBLOCKS); block++) {
                 otherBlock = block % NBLOCKS;
                 __VERIFIER_memory_scope_device();
-                int h = atomic_fetch_add(&head[otherBlock], 0);
+                int h = atomic_fetch_add_explicit(&head[otherBlock], 0,sc);
                 __VERIFIER_memory_scope_device();
                 int t = tail[otherBlock];
                 if ((h + NTHREADS) < t) {
@@ -519,7 +519,7 @@ void divideWork(int size, int value)
                 }
             }
             __VERIFIER_memory_scope_device();
-            *base = atomic_fetch_add(&head[otherBlock], NTHREADS);
+            *base = atomic_fetch_add_explicit(&head[otherBlock], NTHREADS,sc);
             __VERIFIER_memory_scope_work_group();
             atomic_exchange_explicit(blockId, otherBlock,sc);
         }

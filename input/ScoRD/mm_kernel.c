@@ -10,7 +10,7 @@
 
 #define sc memory_order_seq_cst
 
-#define NBLOCKS 3
+#define NBLOCKS 15
 #define NTHREADS 2
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
@@ -57,9 +57,9 @@ pthread_barrier_t barg[GROUPS];
  * All in row-major format
  ***************************************************/
 #define WARP_SIZE 2
-#define ca 3
-#define ra 3
-#define cb 3
+#define ca 6
+#define ra 6
+#define cb 6
 
 atomic_int rA=ra;
 atomic_int cA=ca;

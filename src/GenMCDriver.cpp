@@ -449,16 +449,17 @@ bool GenMCDriver::isExecutionBlocked() const
 				   auto *bLab = llvm::dyn_cast<BlockLabel>(getGraph().getLastThreadLabel(thr.id));
 				   return bLab || thr.isBlocked(); });
 	// if(status) WARN("Blocked Execution - Divergence Occured\n");
-	std::vector<int> barrierBlocked;
-	for (auto thrIt = EE->threads_begin(), thrE = EE->threads_end(); thrIt != thrE; ++thrIt) {
+	if(!getConf()->disableBarrierDivergence){
+		std::vector<int> barrierBlocked;
+		for (auto thrIt = EE->threads_begin(), thrE = EE->threads_end(); thrIt != thrE; ++thrIt) {
 		auto *bLab = llvm::dyn_cast<BlockLabel>(getGraph().getLastThreadLabel(thrIt->id));
 		if (thrIt->getBlockageType() == BlockageType::Barrier ||
 		    (bLab && bLab->getType() == BlockageType::Barrier))
 			barrierBlocked.push_back(thrIt->id);
+		}
+		if (!barrierBlocked.empty())
+			WARN("Blocked Execution - Barrier Divergence Occured\n");
 	}
-
-	if (!barrierBlocked.empty())
-		WARN("Blocked Execution - Barrier Divergence Occured\n");
 	return status;
 }
 
@@ -3571,9 +3572,6 @@ void GenMCDriver::printGraph(bool printMetadata /* false */, llvm::raw_ostream &
 					s.changeColor(getLabelColor(lab));
 			);
 			s << printer.toString(*lab);
-			if(lab->getGroupId() != -1){
-				s << "-[ " << lab->getKernelId() << ", " << lab->getGroupId() << ", " << lab->getScope() <<" ]";
-			}
 			GENMC_DEBUG(s.resetColor(););
 			GENMC_DEBUG(
 				if (getConf()->vLevel >= VerbosityLevel::V1)

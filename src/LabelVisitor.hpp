@@ -365,9 +365,9 @@ public:
 		LabelPrinterBase::visitReadLabel(lab);
 		out << " ";
 		printRf(lab);
-		if(lab.getGroupId() != -1){
-			out << "-[ " << lab.getKernelId() << ", " << lab.getGroupId() << ", " << lab.getScope() <<" ]";
-		}
+		// if(lab.getGroupId() != -1){
+		// 	out << "-[ " << lab.getKernelId() << ", " << lab.getGroupId() << ", " << lab.getScope() <<" ]";
+		// }
 	}
 };
 
