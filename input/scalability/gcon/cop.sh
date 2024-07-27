@@ -1,3 +1,5 @@
+echo "gcon start"
+
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence graph_connectivity-1.c > res1.out 2>&1
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence graph_connectivity-2.c > res2.out 2>&1
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence graph_connectivity-3.c > res3.out 2>&1
@@ -28,3 +30,5 @@
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence graph_connectivity-28.c > res28.out 2>&1
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence graph_connectivity-29.c > res29.out 2>&1
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence graph_connectivity-30.c > res30.out 2>&1
+
+echo "gcon end"

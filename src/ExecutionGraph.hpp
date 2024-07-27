@@ -110,6 +110,7 @@ public:
 	const_reverse_iterator rbegin() const { return events.rbegin(); };
 	const_reverse_iterator rend()   const { return events.rend(); };
 
+	unsigned int getEvSize() {return evsize;}
 
 	/* Thread-related methods */
 
@@ -681,10 +682,13 @@ protected:
 	/* Does some final consistency checks after the fixpoint is over,
 	 * and returns the final decision re. consistency */
 	bool doFinalConsChecks(bool checkFull = false);
+	
 
 private:
 	/* A collection of threads and the events for each threads */
 	ThreadList events;
+
+	unsigned int evsize;
 
 	/* The next available timestamp */
 	unsigned int timestamp;

@@ -84,7 +84,9 @@ void printResults(const std::shared_ptr<const Config> &conf,
 		llvm::outs() << "No errors were detected.\n";
 	else
 		llvm::outs() << res.message;
-
+	llvm::outs() << "\nMax EGraph Size: "
+		     << llvm::format("%d", res.esize)
+		     << "\n";
 	llvm::outs() << "Number of complete executions explored: " << res.explored;
 	GENMC_DEBUG(
 		llvm::outs() << ((conf->countDuplicateExecs) ?

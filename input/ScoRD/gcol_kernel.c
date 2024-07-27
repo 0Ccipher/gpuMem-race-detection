@@ -12,13 +12,13 @@
 #define sc memory_order_seq_cst
 
 #define NBLOCKS 2
-#define NTHREADS 1
+#define NTHREADS 2
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
 #define GLOBAL_WORK_OFFSET 0
 
-#define GROUPS ((WORK_ITEMS_PER_KERNEL / WORK_ITEMS_PER_GROUP)+1)
+#define GROUPS NBLOCKS
 
 struct ThreadData;
 

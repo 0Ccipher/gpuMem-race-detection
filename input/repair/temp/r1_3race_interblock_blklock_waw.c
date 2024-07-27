@@ -59,7 +59,7 @@ void *kernel1( void *arg) {
       int desired = 1;
       if(group_id == 0){
             //  while(atomicCAS_block(&lock, 0, 1) != 0) {}
-            __VERIFIER_memory_scope_work_group();
+            __VERIFIER_memory_scope_device();
             if(atomic_compare_exchange_strong(&lock, &expected1,desired) == 0){
                   __VERIFIER_memory_scope_work_group();
                   atomic_thread_fence(memory_order_seq_cst);
@@ -74,7 +74,7 @@ void *kernel1( void *arg) {
       }    
       else{
             //  while(atomicCAS_block(&lock, 0, 1) != 0) {}
-            __VERIFIER_memory_scope_work_group();
+            __VERIFIER_memory_scope_device();
             if(atomic_compare_exchange_strong(&lock, &expected2,desired) == 0){
                   __VERIFIER_memory_scope_work_group();
                   atomic_thread_fence(memory_order_seq_cst);

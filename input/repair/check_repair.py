@@ -212,7 +212,8 @@ def main(filename,nrepairs):
     cfilename = os.path.basename(filename)
     dest_file = os.path.join(temp_dir, cfilename)
     print(f'Copy {os.path.basename(filename)} to {dest_file}')
-    shutil.copy(filename, dest_file)
+    if not os.path.exists(dest_file):
+        shutil.copy(filename, dest_file)
 
     line_dict = read_file_to_dict(dest_file)
 

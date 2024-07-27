@@ -89,12 +89,13 @@ public:
 		unsigned exploredMoot;
 		std::map<std::pair<int,int>,std::string> races; /*Stores the races*/
 		unsigned racecount;
+		unsigned esize;
 #ifdef ENABLE_GENMC_DEBUG
 		unsigned duplicates;      /* Number of duplicate executions explored */
 #endif
 		std::string message;      /* A message to be printed */
 
-		Result() : status(Status::VS_OK), explored(0), exploredBlocked(0), exploredMoot(0), racecount(0),
+		Result() : status(Status::VS_OK), explored(0), exploredBlocked(0), exploredMoot(0), racecount(0),esize(0),
 #ifdef ENABLE_GENMC_DEBUG
 			   duplicates(0),
 #endif
@@ -111,6 +112,7 @@ public:
 			exploredMoot += other.exploredMoot;
 			racecount += other.racecount;
 			races.insert(other.races.begin() , other.races.end());
+			esize = other.esize > esize ? other.esize : esize;
 #ifdef ENABLE_GENMC_DEBUG
 			duplicates += other.duplicates;
 #endif

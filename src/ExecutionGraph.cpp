@@ -37,6 +37,7 @@ ExecutionGraph::ExecutionGraph(unsigned maxSize /* UINT_MAX */)
 {
 	/* Create an entry for main() and push the "initializer" label */
 	events.push_back({});
+	evsize = 0;
 	addOtherLabelToGraph( std::unique_ptr<ThreadStartLabel>(
 				     new ThreadStartLabel(
 					     0, llvm::AtomicOrdering::Acquire,
@@ -499,6 +500,7 @@ const EventLabel *ExecutionGraph::addOtherLabelToGraph(std::unique_ptr<EventLabe
 		events[pos.thread][pos.index] = std::move(lab);
 	} else {
 		events[pos.thread].push_back(std::move(lab));
+		evsize++;
 	}
 	BUG_ON(pos.index > events[pos.thread].size());
 	WARN_ON_ONCE(pos.index > warnOnGraphSize, "large-graph",

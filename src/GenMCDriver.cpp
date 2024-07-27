@@ -493,6 +493,7 @@ void GenMCDriver::handleFinishedExecution()
 	if (getConf()->printExecGraphs && !getConf()->persevere)
 		printGraph(); /* Delay printing if persevere is enabled */
 	++result.explored;
+	result.esize = (getGraph().getEvSize() > result.esize) ? getGraph().getEvSize() : result.esize;
 	return;
 }
 

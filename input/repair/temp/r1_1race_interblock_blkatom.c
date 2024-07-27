@@ -1,4 +1,4 @@
-/*Inspired from : https://github.com/csl-iisc/ScoR/blob/master/microbenchmarks/src/race_interblock_blklock_waw.cu*/
+/*Inspired from : https://github.com/csl-iisc/ScoR/blob/master/microbenchmarks/src/race_interblock_blkatom.cu*/
 #include <assert.h>
 #include <stdint.h>
 #include <stdatomic.h>
@@ -8,7 +8,7 @@
 
 
 #define NBLOCKS 2
-#define NTHREADS 2
+#define NTHREADS 1
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
@@ -27,7 +27,6 @@ void __VERIFIER_syncthread()                    ;
 void __VERIFIER_groupsize(int localWorkSize)    ;
 
 atomic_int data[1];
-atomic_int lock = 0;
 
 
 struct ThreadData
@@ -54,38 +53,14 @@ void *kernel1( void *arg) {
     __VERIFIER_thread_group_id(group_id);
     __VERIFIER_thread_kernel_id(kernel_id);
 
-      int expected1 = 0;
-      int expected2 = 0;
-      int desired = 1;
-      if(group_id == 0){
-            //  while(atomicCAS_block(&lock, 0, 1) != 0) {}
-            __VERIFIER_memory_scope_work_group();
-            if(atomic_compare_exchange_strong(&lock, &expected1,desired) == 0){
-                  __VERIFIER_memory_scope_work_group();
-                  atomic_thread_fence(memory_order_seq_cst);
-                   __VERIFIER_memory_scope_device();
-                  atomic_store_explicit(&data[0], 1,memory_order_seq_cst);
-                  __VERIFIER_memory_scope_work_group();
-                  atomic_thread_fence(memory_order_seq_cst);
-                  __VERIFIER_memory_scope_work_group();
-                  atomic_exchange_explicit(&lock, 0,memory_order_seq_cst);
-            }
-           
-      }    
-      else{
-            //  while(atomicCAS_block(&lock, 0, 1) != 0) {}
-            __VERIFIER_memory_scope_work_group();
-            if(atomic_compare_exchange_strong(&lock, &expected2,desired) == 0){
-                  __VERIFIER_memory_scope_work_group();
-                  atomic_thread_fence(memory_order_seq_cst);
-                   __VERIFIER_memory_scope_device();
-                  atomic_store_explicit(&data[0], 2,memory_order_seq_cst);
-                  __VERIFIER_memory_scope_work_group();
-                  atomic_thread_fence(memory_order_seq_cst);
-                  __VERIFIER_memory_scope_work_group();
-                  atomic_exchange_explicit(&lock, 0,memory_order_seq_cst);
-            }
-      }
+    if(group_id == 0){
+      __VERIFIER_memory_scope_device();
+       atomic_exchange_explicit(&data[0], 1,memory_order_seq_cst);
+    }    
+    else{
+      __VERIFIER_memory_scope_device();
+       atomic_exchange_explicit(&data[0], 2,memory_order_seq_cst);
+    }
     
     return NULL;
 }
@@ -130,6 +105,6 @@ int main(int argc, char **argv){
         pthread_join(workItems[i] , NULL);
     }
 
-	// printf("_____________________________________\n");
+	printf("_____________________________________\n");
   return 0;
 }

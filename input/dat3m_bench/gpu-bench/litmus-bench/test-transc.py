@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-# Copyright (C) 2024 Omkar
 # Based on source code of Carl Leonardsson
 # Run TOOL on all C tests.
 
