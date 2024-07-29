@@ -219,7 +219,7 @@ def main(filename,nrepairs):
 
     res = None
     try:
-        cmd = ['genmc', '--wb', '--check-consistency-type=full', '--check-consistency-point=step', '--stop-on-race','--nthreads=11', dest_file]
+        cmd = ['genmc', '--wb', '--check-consistency-type=full', '--check-consistency-point=step', '--stop-on-race','--nthreads=11', '--disable-barrier-divergence' ,dest_file]
         out = subprocess.check_output(cmd,stderr = subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         if e.returncode != 42:

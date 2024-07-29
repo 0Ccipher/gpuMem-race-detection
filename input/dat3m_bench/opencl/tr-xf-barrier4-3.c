@@ -76,6 +76,11 @@ int in[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int out[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
  void xf_barrier(int global_id, int group_id, int local_id, int kernel_id) {
+    __VERIFIER_thread_global_id(global_id);
+    __VERIFIER_thread_local_id(local_id);
+    __VERIFIER_thread_group_id(group_id);
+    __VERIFIER_thread_kernel_id(kernel_id);
+
     unsigned int num_groups = NBLOCKS;
 
     unsigned int _id = global_id;

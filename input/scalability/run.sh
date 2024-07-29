@@ -17,5 +17,9 @@ cd /home/lab/Downloads/tools/gpuMem-race-detection/input/dat3m_bench/opencl/ && 
 echo "Dartagnan1"
 cd /home/lab/Downloads/tools/dat3m/home/Dat3M/ && ./run.sh
 
+echo "table 1" 
+cd /home/lab/Downloads/tools/gpuMem-race-detection/input/dat3m_bench/opencl/ && ./cop.sh
+
+
 echo "Dartagnan2"
 cd /home/lab/Downloads/tools/dat3m/home/Dat3M/ && ./run.sh

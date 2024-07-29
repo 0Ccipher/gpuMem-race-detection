@@ -51,8 +51,8 @@ void __VERIFIER_groupsize(int localWorkSize)    ;
  * (u, v) is an edge in the graph
  *
  *************************************************/
-#define Edges 2
-#define vertices 3
+#define Edges 5
+#define vertices 16
 atomic_int V=vertices;
 atomic_int E=Edges;
 atomic_int edgeSetU[Edges];
@@ -75,18 +75,18 @@ void input(){
     atomic_init(&edgeSetU[1],0);
     __VERIFIER_memory_scope_device();
     atomic_init(&edgeSetV[1],2);
-    //  __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetU[2],1);
-    // __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetV[2],2);
-    //  __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetU[3],2);
-    // __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetV[3],3);
-    //  __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetU[4],3);
-    // __VERIFIER_memory_scope_device();
-    // atomic_init(&edgeSetV[4],4);
+     __VERIFIER_memory_scope_device();
+    atomic_init(&edgeSetU[2],1);
+    __VERIFIER_memory_scope_device();
+    atomic_init(&edgeSetV[2],2);
+     __VERIFIER_memory_scope_device();
+    atomic_init(&edgeSetU[3],2);
+    __VERIFIER_memory_scope_device();
+    atomic_init(&edgeSetV[3],3);
+     __VERIFIER_memory_scope_device();
+    atomic_init(&edgeSetU[4],3);
+    __VERIFIER_memory_scope_device();
+    atomic_init(&edgeSetV[4],4);
     //  __VERIFIER_memory_scope_device();
     // atomic_init(&edgeSetU[5],4);
     // __VERIFIER_memory_scope_device();

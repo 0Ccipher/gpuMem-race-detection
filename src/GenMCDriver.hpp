@@ -27,6 +27,7 @@
 #include "RevisitSet.hpp"
 #include "WorkSet.hpp"
 #include <llvm/IR/Module.h>
+#include <chrono>
 
 #include <ctime>
 #include <map>
@@ -410,6 +411,12 @@ protected:
 	bool isCoMaximal(SAddr addr, Event e, bool checkCache = false,
 			 ProgramPoint p = ProgramPoint::step);
 
+	void startClock(){
+		start=Clock::now();
+	}
+	bool isTimeOut(){
+		end = Clock::now();
+	}
 private:
 	/*** Worklist-related ***/
 
@@ -858,6 +865,10 @@ private:
 
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream &s,
 					     const Status &r);
+
+	using Clock = std::chrono::high_resolution_clock;
+    std::chrono::time_point<Clock> start;
+    std::chrono::time_point<Clock> end;
 };
 
 #endif /* __GENMC_DRIVER_HPP__ */

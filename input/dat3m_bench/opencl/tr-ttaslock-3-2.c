@@ -178,7 +178,7 @@ int main(int argc, char **argv){
     for(int i=0 ; i < 6 ; i++){
         pthread_join(workItems[i] , NULL);
     }
-    assert(0);
+    //assert(0);
   return 0;
 }
 

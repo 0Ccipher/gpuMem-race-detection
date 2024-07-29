@@ -62,26 +62,30 @@ atomic_int next=0;
 int x=0;
 int A[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
- void lock( ) {
-#ifdef DV2WG
-       __VERIFIER_memory_scope_work_group();
-#else
-      __VERIFIER_memory_scope_device();
-#endif
-    int ticket = atomic_fetch_add_explicit(&next, 1, memory_order_relaxed);
-    while (atomic_load_explicit(&owner, mo_lock) != ticket) {}
-}
+//  void lock( ) {
+// #ifdef DV2WG
+//        __VERIFIER_memory_scope_work_group();
+// #else
+//       __VERIFIER_memory_scope_device();
+// #endif
+//     int ticket = atomic_fetch_add_explicit(&next, 1, memory_order_relaxed);
+//     while (atomic_load_explicit(&owner, mo_lock) != ticket) {}
+// }
 
- void unlock() {
-#ifdef DV2WG
-       __VERIFIER_memory_scope_work_group();
-#else
-      __VERIFIER_memory_scope_device();
-#endif
-    int current = atomic_load_explicit(&owner, memory_order_relaxed);
-    atomic_store_explicit(&owner, current + 1, mo_unlock);
-}
+//  void unlock() {
+// #ifdef DV2WG
+//        __VERIFIER_memory_scope_work_group();
+// #else
+//       __VERIFIER_memory_scope_device();
+// #endif
+//     int current = atomic_load_explicit(&owner, memory_order_relaxed);
+//     atomic_store_explicit(&owner, current + 1, mo_unlock);
+// }
 void mutex_test(int global_id, int group_id, int local_id, int kernel_id) {
+    __VERIFIER_thread_global_id(global_id);
+    __VERIFIER_thread_local_id(local_id);
+    __VERIFIER_thread_group_id(group_id);
+    __VERIFIER_thread_kernel_id(kernel_id);
     int a;
     // lock();
 #ifdef DV2WG

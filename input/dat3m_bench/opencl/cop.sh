@@ -17,7 +17,6 @@ echo "table 1 start"
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence tr-ttaslock-RelRx-4-2.c  >> ttaslock-RelRx-4-2.out 2>&1
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence tr-ttaslock-RelRx-6-4.c  >> ttaslock-RelRx-6-4.out 2>&1
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence tr-xf-barrier4-3.c  >> xf-barrier4-3.out 2>&1
-/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence tr-xf-barrier6-4.c  >> xf-barrier6-4.out 2>&1
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence tr-xf-barrierAcqRx-4-3.c  >> xf-barrierAcqRx-4-3.out 2>&1
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence tr-xf-barrierAcqRx-6-4.c  >> xf-barrierAcqRx-6-4.out 2>&1
 /usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence tr-xf-barrierRelRx-4-3.c  >> xf-barrierRelRx-4-3.out 2>&1

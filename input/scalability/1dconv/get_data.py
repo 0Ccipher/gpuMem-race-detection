@@ -4,6 +4,7 @@ n = 1
 rowmem =[]
 rowtime = []
 rowexec = []
+rowegraph = []
 with open('1dconv_mem.dat','w') as outfile:
       for i in range(1,31):
             with open(f'res{i}.out','r') as infile:
@@ -45,8 +46,22 @@ with open('1dconv_exec.dat','w') as outfile:
                               n = n+1
                               break
 
+#egraph
+n = 1
+with open('1dconv_esize.dat','w') as outfile:
+      for i in range(1,31):
+            with open(f'res{i}.out','r') as infile:
+                  lines = infile.readlines()
+                  for line in lines:
+                        if 'Max EGraph Size:' in line:
+                              value = int(line.split(":")[1].strip())
+                              outfile.write(f'{n} {value}\n')
+                              rowegraph.append([n,value])
+                              n = n+1
+                              break
+
 table = []
-table.append(["Program","Mem","Time","Exec"])
+table.append(["Program","Mem","Time","Exec","Egraph"])
 for i in range(len(rowmem)):
-      table.append([rowmem[i][0] , rowmem[i][1] , rowtime[i][1] , rowexec[i][1]])
+      table.append([rowmem[i][0] , rowmem[i][1] , rowtime[i][1] , rowexec[i][1], rowegraph[i][1]])
 print(tabulate(table, headers='firstrow', tablefmt='pipe'))

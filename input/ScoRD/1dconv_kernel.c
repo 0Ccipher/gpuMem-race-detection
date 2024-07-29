@@ -48,8 +48,8 @@ pthread_barrier_t barg[GROUPS];
 #define WARP_SIZE (NTHREADS < 32 ? NTHREADS : 32)
 #define NTHREADS_TOT  (NBLOCKS * NTHREADS)
 
-#define fsize (NBLOCKS < 15 ? NBLOCKS : 15)
-#define arrsize 20+NBLOCKS
+#define fsize 3
+#define arrsize 4
 atomic_int filter[fsize];
 atomic_int filterSize = fsize;
 atomic_int array[arrsize];

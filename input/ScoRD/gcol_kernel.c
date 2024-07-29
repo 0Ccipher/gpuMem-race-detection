@@ -7,12 +7,12 @@
 #include <limits.h>
 #include <stdbool.h>
 
-#define RACEY
+// #define RACEY
 
 #define sc memory_order_seq_cst
 
 #define NBLOCKS 2
-#define NTHREADS 2
+#define NTHREADS 1
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
@@ -322,7 +322,7 @@ void divideWork(int size, int value)
 
             __VERIFIER_memory_scope_device();
             if(colorSet[U] == colorSet[V] && 
-                atomic_fetch_add_explicit(&vertexColor[U], 0,sc) == atomic_fetch_add_explicit(&vertexColor[V], 0,sc),sc) {
+                atomic_fetch_add_explicit(&vertexColor[U], 0,sc) == atomic_fetch_add_explicit(&vertexColor[V], 0,sc)) {
                 __VERIFIER_memory_scope_device();
                 atomic_exchange_explicit(&vertexColor[U], 0,sc);
             }

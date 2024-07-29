@@ -7,8 +7,8 @@
 #include <limits.h>
 
 
-#define NBLOCKS 2
-#define NTHREADS 2
+#define NBLOCKS 8
+#define NTHREADS 1
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)

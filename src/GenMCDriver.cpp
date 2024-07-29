@@ -567,6 +567,7 @@ void GenMCDriver::halt(Status status)
 
 GenMCDriver::Result GenMCDriver::verify(std::shared_ptr<const Config> conf, std::unique_ptr<llvm::Module> mod)
 {
+	
 	auto MI = std::make_unique<ModuleInfo>(*mod);
 
 	/* Prepare the module for verification */

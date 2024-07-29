@@ -4,6 +4,7 @@ n = 1
 rowmem =[]
 rowtime = []
 rowexec = []
+rowegraph = []
 with open('gcon_2_mem.dat','w') as outfile:
       for i in range(1,31):
             with open(f'res{i}.out','r') as infile:
@@ -14,8 +15,8 @@ with open('gcon_2_mem.dat','w') as outfile:
                               value = value / 1000
                               if i % 2== 0:
                                     outfile.write(f'{n} {value}\n')
+                                    rowmem.append([n,value])
                                     n = n+1
-                              rowmem.append([n,value])
                               break
 #time
 n = 1
@@ -29,8 +30,8 @@ with open('gcon_2_time.dat','w') as outfile:
                               value = value.replace('s', '')
                               if i % 2== 0:
                                     outfile.write(f'{n} {value}\n')
-                                    n = n+1
-                              rowtime.append([n,value])
+                                    rowtime.append([n,value])
+                                    n=n+1
                               break
 
 #executions
@@ -44,12 +45,26 @@ with open('gcon_2_exec.dat','w') as outfile:
                               value = int(line.split(":")[1].strip())
                               if i % 2== 0:
                                     outfile.write(f'{n} {value}\n')
-                                    n = n+1
-                              rowexec.append([n,value])
+                                    rowexec.append([n,value])
+                                    n=n+1
                               break
 
+#egraph
+n = 1
+with open('gcon_2_esize','w') as outfile:
+      for i in range(1,31):
+            with open(f'res{i}.out','r') as infile:
+                  lines = infile.readlines()
+                  for line in lines:
+                        if 'Max EGraph Size:' in line:
+                              value = int(line.split(":")[1].strip())
+                              if i % 2== 0:
+                                    outfile.write(f'{n} {value}\n')
+                                    rowegraph.append([n,value])
+                                    n=n+1
+                              break
 table = []
-table.append(["Program","Mem","Time","Exec"])
+table.append(["Program","Mem","Time","Exec","Egraph"])
 for i in range(len(rowmem)):
-      table.append([rowmem[i][0] , rowmem[i][1] , rowtime[i][1] , rowexec[i][1]])
+      table.append([rowmem[i][0] , rowmem[i][1] , rowtime[i][1] , rowexec[i][1], rowegraph[i][1]])
 print(tabulate(table, headers='firstrow', tablefmt='pipe'))

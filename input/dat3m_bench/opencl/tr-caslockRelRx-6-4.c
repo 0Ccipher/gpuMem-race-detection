@@ -86,6 +86,10 @@ int A[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0};
 // }
 
 void mutex_test(int global_id, int group_id, int local_id, int kernel_id) {
+    __VERIFIER_thread_global_id(global_id);
+    __VERIFIER_thread_local_id(local_id);
+    __VERIFIER_thread_group_id(group_id);
+    __VERIFIER_thread_kernel_id(kernel_id);
     int a=0;
     int e=0;
     // lock();
