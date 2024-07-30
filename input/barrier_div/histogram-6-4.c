@@ -1,3 +1,4 @@
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdatomic.h>
@@ -7,6 +8,8 @@
 
 #define sc memory_order_seq_cst
 
+#define RACEY
+
 #define NBLOCKS 6
 #define NTHREADS 4
 
@@ -14,21 +17,7 @@
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
 #define GLOBAL_WORK_OFFSET 0
 
-#define GROUPS NBLOCKS
-
-struct ThreadData;
-
-//  also track the work-item offset in clEnqueueNDRangeKernel()
-void __VERIFIER_memory_scope_work_group()       ;
-void __VERIFIER_memory_scope_device()           ;
-void     __VERIFIER_memory_scope_system()       ;
-void __VERIFIER_thread__id(int a)         ;
-void __VERIFIER_thread_local_id(int a)          ;
-void __VERIFIER_thread_group_id(int a)          ;
-void __VERIFIER_thread_kernel_id(int a)         ;
-void __VERIFIER_thread_global_id(int global_id)     ;
-void __VERIFIER_syncthread()                    ;
-void __VERIFIER_groupsize(int localWorkSize)    ;
+#define GROUPS ((WORK_ITEMS_PER_KERNEL / WORK_ITEMS_PER_GROUP)+1)
 
 struct ThreadData
 {
@@ -39,226 +28,172 @@ struct ThreadData
 };
 
 
+//  also track the work-item offset in clEnqueueNDRangeKernel()
+void __VERIFIER_memory_scope_work_group()       ;
+void __VERIFIER_memory_scope_device()           ;
+void __VERIFIER_thread_global_id(int a)         ;
+void __VERIFIER_thread_local_id(int a)          ;
+void __VERIFIER_thread_group_id(int a)          ;
+void __VERIFIER_thread_kernel_id(int a)         ;
+void __VERIFIER_syncthread()                    ;
+void __VERIFIER_groupsize(int localWorkSize)    ;
+
+
 pthread_barrier_t bard;
 pthread_barrier_t barg[GROUPS];
 
-// #define FAIL1
-// #define FAIL2
-// #define FAIL3
-// #define FAIL4
+#define N 18
+#define B 4
+atomic_int input[N] = {0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8};
+atomic_int histogram[B] = {0,0,0,0};
+atomic_int local[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-#ifdef FAIL1
-#define mo1 memory_order_relaxed
-#else
-#define mo1 memory_order_acquire
-#endif
 
-#ifdef FAIL2
-#define mo2 memory_order_relaxed
-#else
-#define mo2 memory_order_release
-#endif
-
-#ifdef FAIL3
-#define mo3 memory_order_relaxed
-#else
-#define mo3 memory_order_release
-#endif
-
-#ifdef FAIL4
-#define mo4 memory_order_relaxed
-#else
-#define mo4 memory_order_acquire
-#endif
-
-atomic_int flag[] = {0, 0, 0, 0, 0, 0, 0, 0};
-int in[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0,0,0};
-int out[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0,0,0};
-
- void xf_barrier(int global_id, int group_id, int local_id, int kernel_id) {
+void compute_histogram(int global_id, int group_id, int local_id, int kernel_id)
+{
     __VERIFIER_thread_global_id(global_id);
     __VERIFIER_thread_local_id(local_id);
     __VERIFIER_thread_group_id(group_id);
     __VERIFIER_thread_kernel_id(kernel_id);
-    unsigned int num_groups = NBLOCKS;
+    int num_groups = NBLOCKS;
+    int gid = global_id;
+    int lid = local_id;
+    int lsize = NTHREADS;
+    int group_start = (gid / lsize) * (N / num_groups);
+    int group_end = group_start + (N / num_groups);
 
-    unsigned int _id = global_id;
-    unsigned int global_size = NBLOCKS * NTHREADS;
+    // Phase 1: Work-items co-operate to zero local memory
 
-    __VERIFIER_memory_scope_system();
-    in[global_id] = 1;
-
-    if (group_id == 0) {
-        if (local_id + 1 < num_groups) {
-            __VERIFIER_memory_scope_device();
-            while (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){};
-            // __VERIFIER_memory_scope_device();
-            // if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-            //      __VERIFIER_memory_scope_device();
-            //     if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-            //         __VERIFIER_memory_scope_device();
-            //         if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){
-            //             __VERIFIER_memory_scope_device();
-            //             if (atomic_load_explicit(&flag[local_id + 1], mo1) == 0){return;};
-            //         }
-            //     }
-            // }
-           
-            
-        }
-        // barrier(CLK__MEM_FENCE);
+    // Phase 2: Work-groups each compute a chunk of the input.
+    // Work-items co-operate to compute histogram in local memory
+    for (int i = group_start + lid; i < group_end; i += lsize) {
+        int32_t b = input[i] % B;
+        int li = group_id * B + b;
+        __VERIFIER_memory_scope_work_group();
+        atomic_fetch_add_explicit(&local[li],1,memory_order_relaxed);
+    }
+      // Wait for all local histogram updates to complete
+      /* Synchronize */
+    if(local_id == 3){
         __VERIFIER_memory_scope_work_group();
         int rc = pthread_barrier_wait(&barg[group_id]);
         if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
             printf("Could not wait on barrier\n");
-            pthread_exit(NULL);
-        }
-        if (local_id + 1 < num_groups) {
-            __VERIFIER_memory_scope_device();
-            atomic_store_explicit(&flag[local_id + 1], 0, mo2);
-        }
-    } else {
-        // barrier(CLK__MEM_FENCE);
-        __VERIFIER_memory_scope_work_group();
-        int rc = pthread_barrier_wait(&barg[group_id]);
-        if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-            printf("Could not wait on barrier\n");
-            pthread_exit(NULL);
-        }
-        if (local_id == 0) {
-            __VERIFIER_memory_scope_device();
-            atomic_store_explicit(&flag[group_id], 1, mo3);
-            __VERIFIER_memory_scope_device();
-            while (atomic_load_explicit(&flag[group_id], mo4) == 1){};
-            //  __VERIFIER_memory_scope_device();
-            // if (atomic_load_explicit(&flag[group_id], mo1) == 1){
-            //      __VERIFIER_memory_scope_device();
-            //     if (atomic_load_explicit(&flag[group_id], mo1) == 1){
-            //         __VERIFIER_memory_scope_device();
-            //         if (atomic_load_explicit(&flag[group_id], mo1) == 1){
-            //             __VERIFIER_memory_scope_device();
-            //             if (atomic_load_explicit(&flag[group_id], mo1) == 1){return;};
-            //         }
-            //     }
-            // }
-
-        }
-        // barrier(CLK__MEM_FENCE);
-        __VERIFIER_memory_scope_work_group();
-        rc = pthread_barrier_wait(&barg[group_id]);
-        if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
-            printf("Could not wait on barrier\n");
-            pthread_exit(NULL);
+        pthread_exit(NULL);
         }
     }
-    __VERIFIER_memory_scope_system();
-    for (unsigned int i = 0; i < global_size; i++) {
-        out[_id] += in[i];
+
+    // Phase 3: Work-items co-operate to update global memory
+    for (int32_t b = lid; b < B; b += lsize) {
+         int li = group_id * B + b;
+         __VERIFIER_memory_scope_device();
+        atomic_fetch_add_explicit(&histogram[b], local[li],memory_order_relaxed);
     }
 }
 
 
+
 void *kernel00(void *arg) {
-    xf_barrier(0, 0, 0, 0);
+    compute_histogram(0, 0, 0, 0);
     return NULL;
 }
 
 void *kernel01(void *arg) {
-    xf_barrier(1, 0, 1, 0);
+    compute_histogram(1, 0, 1, 0);
     return NULL;
 }
 
 void *kernel02(void *arg) {
-    xf_barrier(2, 0, 2, 0);
+    compute_histogram(2, 0, 2, 0);
     return NULL;
 }
 
 void *kernel03(void *arg) {
-    xf_barrier(3, 0, 3, 0);
+    compute_histogram(3, 0, 3, 0);
     return NULL;
 }
 
 void *kernel10(void *arg) {
-    xf_barrier(4, 1, 0, 0);
+    compute_histogram(4, 1, 0, 0);
     return NULL;
 }
 
 void *kernel11(void *arg) {
-    xf_barrier(5, 1, 1, 0);
+    compute_histogram(5, 1, 1, 0);
     return NULL;
 }
 
 void *kernel12(void *arg) {
-    xf_barrier(6, 1, 2, 0);
+    compute_histogram(6, 1, 2, 0);
     return NULL;
 }
 void *kernel13(void *arg) {
-    xf_barrier(7, 1, 3, 0);
+    compute_histogram(7, 1, 3, 0);
     return NULL;
 }
 void *kernel20(void *arg) {
-    xf_barrier(8, 2, 0, 0);
+    compute_histogram(8, 2, 0, 0);
     return NULL;
 }
 void *kernel21(void *arg) {
-    xf_barrier(9, 2, 1, 0);
+    compute_histogram(9, 2, 1, 0);
     return NULL;
 }
 void *kernel22(void *arg) {
-    xf_barrier(10, 2, 2, 0);
+    compute_histogram(10, 2, 2, 0);
     return NULL;
 }
 void *kernel23(void *arg) {
-    xf_barrier(11, 2, 3, 0);
+    compute_histogram(11, 2, 3, 0);
     return NULL;
 }
 void *kernel30(void *arg) {
-    xf_barrier(12, 3, 0, 0);
+    compute_histogram(12, 3, 0, 0);
     return NULL;
 }
 void *kernel31(void *arg) {
-    xf_barrier(13, 3, 1, 0);
+    compute_histogram(13, 3, 1, 0);
     return NULL;
 }
 void *kernel32(void *arg) {
-    xf_barrier(14, 3, 2, 0);
+    compute_histogram(14, 3, 2, 0);
     return NULL;
 }
 void *kernel33(void *arg) {
-    xf_barrier(15, 3, 3, 0);
+    compute_histogram(15, 3, 3, 0);
     return NULL;
 }
 void *kernel40(void *arg) {
-    xf_barrier(16, 4, 0, 0);
+    compute_histogram(16, 4, 0, 0);
     return NULL;
 }
 void *kernel41(void *arg) {
-    xf_barrier(17, 4, 1, 0);
+    compute_histogram(17, 4, 1, 0);
     return NULL;
 }
 void *kernel42(void *arg) {
-    xf_barrier(18, 4, 2, 0);
+    compute_histogram(18, 4, 2, 0);
     return NULL;
 }
 void *kernel43(void *arg) {
-    xf_barrier(19, 4, 3, 0);
+    compute_histogram(19, 4, 3, 0);
     return NULL;
 }
 
 void *kernel50(void *arg) {
-    xf_barrier(20, 5, 0, 0);
+    compute_histogram(20, 5, 0, 0);
     return NULL;
 }
 void *kernel51(void *arg) {
-    xf_barrier(21, 5, 1, 0);
+    compute_histogram(21, 5, 1, 0);
     return NULL;
 }
 void *kernel52(void *arg) {
-    xf_barrier(22, 5, 2, 0);
+    compute_histogram(22, 5, 2, 0);
     return NULL;
 }
 void *kernel53(void *arg) {
-    xf_barrier(23, 5, 3, 0);
+    compute_histogram(23, 5, 3, 0);
     return NULL;
 }
 

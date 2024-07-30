@@ -10,8 +10,8 @@
 
 #define sc memory_order_seq_cst
 
-#define NBLOCKS 3
-#define NTHREADS 1
+#define NBLOCKS 2
+#define NTHREADS 2
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
@@ -106,6 +106,7 @@ void matMultKernel(int global_id, int group_id, int local_id, int kernel_id)
     if(tid == 0)
         *sh_lock = 0;
 
+    
     /* Synchronize */
     __VERIFIER_memory_scope_work_group();
     int rc = pthread_barrier_wait(&barg[group_id]);
@@ -113,6 +114,7 @@ void matMultKernel(int global_id, int group_id, int local_id, int kernel_id)
         printf("Could not wait on barrier\n");
         pthread_exit(NULL);
     }
+    
     
     // Repeat until entire matrix has been covered
     __VERIFIER_memory_scope_device();
@@ -128,7 +130,7 @@ void matMultKernel(int global_id, int group_id, int local_id, int kernel_id)
             }
             /* Synchronize */
             __VERIFIER_memory_scope_work_group();
-            rc = pthread_barrier_wait(&barg[group_id]);
+            int rc = pthread_barrier_wait(&barg[group_id]);
             if (rc != 0 && rc != PTHREAD_BARRIER_SERIAL_THREAD) {
                 printf("Could not wait on barrier\n");
                 pthread_exit(NULL);

@@ -441,7 +441,7 @@ void GenMCDriver::checkHelpingCasAnnotation()
 	return;
 }
 
-bool GenMCDriver::isExecutionBlocked() const
+bool GenMCDriver::isExecutionBlocked() 
 {
 	bool status = false;
 	status = std::any_of(getEE()->threads_begin(), getEE()->threads_end(),
@@ -457,8 +457,10 @@ bool GenMCDriver::isExecutionBlocked() const
 		    (bLab && bLab->getType() == BlockageType::Barrier))
 			barrierBlocked.push_back(thrIt->id);
 		}
-		if (!barrierBlocked.empty())
-			WARN("Blocked Execution - Barrier Divergence Occured\n");
+		if (!barrierBlocked.empty()){
+			auto *bLab = (getGraph().getLastThreadLabel(barrierBlocked.back()));
+			visitError(bLab->getPos(),Status::VS_BarrierDivergence,"");
+		}
 	}
 	return status;
 }
@@ -494,6 +496,16 @@ void GenMCDriver::handleFinishedExecution()
 		printGraph(); /* Delay printing if persevere is enabled */
 	++result.explored;
 	result.esize = (getGraph().getEvSize() > result.esize) ? getGraph().getEvSize() : result.esize;
+	if(getConf()->timeout > 0){
+		auto end = Clock::now();
+			 if (end - getConf()->start >= getConf()->duration){
+				shouldHalt = true;
+				result.status = Status::VS_TimeOut;
+				workqueue.clear();
+				if (getThreadPool())
+					getThreadPool()->halt();
+			 }
+	}
 	return;
 }
 
@@ -567,9 +579,8 @@ void GenMCDriver::halt(Status status)
 
 GenMCDriver::Result GenMCDriver::verify(std::shared_ptr<const Config> conf, std::unique_ptr<llvm::Module> mod)
 {
-	
 	auto MI = std::make_unique<ModuleInfo>(*mod);
-
+	
 	/* Prepare the module for verification */
 	LLVMModule::transformLLVMModule(*mod, *MI, conf);
 	if (conf->transformFile != "")
@@ -1050,11 +1061,11 @@ void GenMCDriver::checkForDataRaces(const MemAccessLabel *lab)
 	if (getConf()->disableRaceDetection)
 		return;
 
-	// auto racy = findDataRaceForMemAccess(lab);
+	auto racy = findDataRaceForMemAccess(lab);
 
 	/* If a race is found and the execution is consistent, return it */
 	// if (!racy.isInitializer())
-	// 	visitError(lab->getPos(), Status::VS_RaceNotAtomic, "", racy);
+		// visitError(lab->getPos(), Status::VS_RaceNotAtomic, "", racy);
 	/* If this is a new race then, store it to the result */
 
 	// if(!racy.isInitializer()){
@@ -3474,6 +3485,8 @@ llvm::raw_ostream& operator<<(llvm::raw_ostream &s,
 		return s << "Mixed-size accesses";
 	case Status::VS_SystemError:
 		return s << errorList.at(systemErrorNumber);
+	case Status::VS_BarrierDivergence:
+		return s << "Barrier Divergence";
 	default:
 		return s << "Uknown status";
 	}

@@ -187,7 +187,7 @@ void matMultKernel(int global_id, int group_id, int local_id, int kernel_id)
                     int expected2 = 0;
                     __VERIFIER_memory_scope_device();
                     int cb1 = cB;
-                    __VERIFIER_memory_scope_work_group();
+                    __VERIFIER_memory_scope_device();
                     if(0 == atomic_compare_exchange_strong(&gl_lock[(i * WARP_SIZE + tid + row * cb1) % NTHREADS], &expected2, 1)) {
                         __VERIFIER_memory_scope_work_group();
                         atomic_thread_fence(memory_order_seq_cst);

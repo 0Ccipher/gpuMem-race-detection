@@ -80,6 +80,12 @@ def grep_races(lines,start):
         return []
     return races
 
+def grep_num(lines, start):
+    for line in lines:
+        if line.startswith(start):
+            return int(line[len(start):])
+    return 0
+
 def checkrepair(filename,races):
     global rcount
     newScope = {}
@@ -175,7 +181,7 @@ def check(dest_file):
     print(f"\n**Checking races in {dest_file}**\n")
     res = None
     try:
-        cmd = ['genmc', '--wb', '--check-consistency-type=full', '--check-consistency-point=step', '--stop-on-race','--nthreads=11', dest_file]
+        cmd = ['genmc', '--wb', '--check-consistency-type=full', '--check-consistency-point=step', '--stop-on-race','--nthreads=11','--timeout=200', dest_file]
         out = subprocess.check_output(cmd,stderr = subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         if e.returncode != 42:
@@ -187,11 +193,17 @@ def check(dest_file):
     out = out.decode()
     lines = out.split("\n")
     races = grep_races(lines, "Number of complete executions explored: ")
+    executions = grep_num(lines,"Number of complete executions explored: ")
+    esize = grep_num(lines,"Max EGraph Size: ")
     if (out.find('Assertion violation:') >= 0):
         print("Assertion Violation")
         return
     if len(races) == 0:
         print("No Race Detected")
+        if out.find('TimeOut') >=0:
+            print("Till The TimeOut of 10mins")
+        print(f"Explored Complete Executions: {executions}")
+        print(f"EGraph Size: {esize}")
         return
     if len(races) > 0:
         print("Races Dected:")
@@ -212,14 +224,14 @@ def main(filename,nrepairs):
     cfilename = os.path.basename(filename)
     dest_file = os.path.join(temp_dir, cfilename)
     print(f'Copy {os.path.basename(filename)} to {dest_file}')
-    if not os.path.exists(dest_file):
-        shutil.copy(filename, dest_file)
+    # if not os.path.exists(dest_file):
+    shutil.copy(filename, dest_file)
 
     line_dict = read_file_to_dict(dest_file)
 
     res = None
     try:
-        cmd = ['genmc', '--wb', '--check-consistency-type=full', '--check-consistency-point=step', '--stop-on-race','--nthreads=11', '--disable-barrier-divergence' ,dest_file]
+        cmd = ['genmc', '--wb', '--check-consistency-type=full', '--check-consistency-point=step', '--stop-on-race','--nthreads=11', '--disable-barrier-divergence','--timeout=200',dest_file]
         out = subprocess.check_output(cmd,stderr = subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         if e.returncode != 42:
@@ -231,11 +243,17 @@ def main(filename,nrepairs):
     out = out.decode()
     lines = out.split("\n")
     races = grep_races(lines, "Number of complete executions explored: ")
+    executions = grep_num(lines,"Number of complete executions explored: ")
+    esize = grep_num(lines,"Max EGraph Size: ")
     if (out.find('Assertion violation:') >= 0):
         print("Assertion Violation")
         return
     if len(races) == 0:
         print("No Race Detected")
+        if out.find('TimeOut') >=0:
+            print("Till The TimeOut of 10mins")
+        print(f"Explored Complete Executions: {executions}")
+        print(f"EGraph Size: {esize}")
         return
     if len(races) > 0:
         print("Races Dected:")
@@ -247,6 +265,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', dest='repairs', metavar='N', type=int,
                         default=int(-1), help='Number of repairs')
+    # parser.add_argument('-timeout', dest='timeout', metavar='N', type=int,
+    #                     default=int(-1), help='Timeout for executions')
     parser.add_argument('-test', dest='file',help='Enter the file')
     args = parser.parse_args()
     if args.file:

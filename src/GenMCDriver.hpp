@@ -28,7 +28,6 @@
 #include "WorkSet.hpp"
 #include <llvm/IR/Module.h>
 #include <chrono>
-
 #include <ctime>
 #include <map>
 #include <memory>
@@ -80,6 +79,8 @@ public:
 		VS_Annotation,
 		VS_MixedSize,
 		VS_SystemError,
+		VS_TimeOut,
+		VS_BarrierDivergence,
 	};
 
 	/* Verification result */
@@ -331,6 +332,7 @@ public:
 	void reportRaces(Event pos, std::vector<Event> &races);
 	/* Handle SyncThreads*/
 	void visitBarrierSync(std::unique_ptr<BarrierSyncLabel> lab);
+	
 
 	virtual ~GenMCDriver();
 
@@ -411,12 +413,6 @@ protected:
 	bool isCoMaximal(SAddr addr, Event e, bool checkCache = false,
 			 ProgramPoint p = ProgramPoint::step);
 
-	void startClock(){
-		start=Clock::now();
-	}
-	bool isTimeOut(){
-		end = Clock::now();
-	}
 private:
 	/*** Worklist-related ***/
 
@@ -497,7 +493,7 @@ private:
 	bool scheduleNormal();
 
 	/* Returns whether the current execution is blocked */
-	bool isExecutionBlocked() const;
+	bool isExecutionBlocked() ;
 
 	/* Opt: Tries to reschedule any reads that were added blocked */
 	bool rescheduleReads();
@@ -865,10 +861,8 @@ private:
 
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream &s,
 					     const Status &r);
-
 	using Clock = std::chrono::high_resolution_clock;
-    std::chrono::time_point<Clock> start;
-    std::chrono::time_point<Clock> end;
+
 };
 
 #endif /* __GENMC_DRIVER_HPP__ */

@@ -25,6 +25,8 @@
 #include "VSet.hpp"
 
 #include <string>
+#include <chrono>
+
 
 
 enum class ModelType { rc11, imm, lkmm };
@@ -58,6 +60,7 @@ public:
 	bool stoponFirstRaceDetection;
 	bool disableBAM;
 	bool disableStopOnSystemError;
+	int timeout;
 
 	/*** Persistency options ***/
 	bool persevere;
@@ -98,6 +101,12 @@ public:
 
 	/* Parses the CLI options and initialized the respective fields */
 	void getConfigOptions(int argc, char **argv);
+	void startClock();
+	using Clock = std::chrono::high_resolution_clock;
+	std::chrono::time_point<Clock> start;
+	std::chrono::duration<int64_t, std::ratio<60>> duration;
+
+
 
 private:
 	void checkConfigOptions() const;

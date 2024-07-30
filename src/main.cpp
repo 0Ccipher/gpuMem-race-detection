@@ -82,12 +82,14 @@ void printResults(const std::shared_ptr<const Config> &conf,
 
 	if (res.status == GenMCDriver::Status::VS_OK)
 		llvm::outs() << "No errors were detected.\n";
-	else
-		llvm::outs() << res.message;
-	llvm::outs() << "\nMax EGraph Size: "
-		     << llvm::format("%d", res.esize)
-		     << "\n";
-	llvm::outs() << "Number of complete executions explored: " << res.explored;
+	else{
+		if(res.status == GenMCDriver::Status::VS_TimeOut)
+			llvm::outs() << "\nNo errors were detected till TimeOut.\n";
+		else
+			llvm::outs() << res.message;
+	}
+	llvm::outs() << "\nMax EGraph Size: " << res.esize;
+	llvm::outs() << "\nNumber of complete executions explored: " << res.explored;
 	GENMC_DEBUG(
 		llvm::outs() << ((conf->countDuplicateExecs) ?
 				 " (" + std::to_string(res.duplicates) + " duplicates)" : "");
@@ -133,7 +135,6 @@ int main(int argc, char **argv)
 	std::unique_ptr<llvm::Module> module;
 	if (!compileInput(conf, ctx, module))
 		return ECOMPILE;
-
 	auto res = GenMCDriver::verify(conf, std::move(module));
 	printResults(conf, begin, res);
 

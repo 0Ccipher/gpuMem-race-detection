@@ -111,6 +111,10 @@ static llvm::cl::opt<bool>
 clCheckLiveness("check-liveness", llvm::cl::cat(clGeneral),
 		llvm::cl::desc("Check for liveness violations"));
 
+static llvm::cl::opt<int>
+clTimeOut("timeout", llvm::cl::cat(clGeneral),llvm::cl::init(-1),
+		     llvm::cl::desc("TimeOut in minutes"));
+
 static llvm::cl::opt<bool>
 clDisableRaceDetection("disable-race-detection", llvm::cl::cat(clGeneral),
 		     llvm::cl::desc("Disable race detection"));
@@ -352,6 +356,7 @@ void Config::saveConfigOptions()
 	checkConsPoint = (LAPOR ? ProgramPoint::step : clCheckConsPoint);
 	checkLiveness = clCheckLiveness;
 	disableRaceDetection = clDisableRaceDetection;
+	timeout = clTimeOut;
 	disableBarrierDivergence = clDisableBarrierDivergence;
 	stoponFirstRaceDetection = clStoponFirstRaceDetection;
 	disableBAM = clDisableBAM;
@@ -412,6 +417,16 @@ void Config::getConfigOptions(int argc, char **argv)
 	checkConfigOptions();
 	saveConfigOptions();
 
+	/*Start the clock-if timeout specifies*/
+	startClock();
+
 	llvm::cl::ResetAllOptionOccurrences();
 	clInputFile.removeArgument();
+}
+
+void Config::startClock(){
+		if(timeout > 0){
+			duration = std::chrono::minutes(timeout);
+			start=Clock::now();
+		}
 }
