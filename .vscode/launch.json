@@ -6,7 +6,7 @@
                   "type": "cppdbg",
                   "request": "launch",
                   "program": "${workspaceFolder}/src/genmc",
-                  "args": ["--wb","--schedule-policy=ltr","--check-consistency-point=step","--check-consistency-type=full", "/home/lab/Downloads/tools/gpuMem-race-detection/input/dat3m/opencl/tr-xf-barrier4-2.c"],
+                  "args": ["--wb","--schedule-policy=ltr","--check-consistency-point=step","--check-consistency-type=full", "/home/lab/Downloads/tools/gpuMem-race-detection/input/simulee/JacobiSVD.c"],
                   "stopAtEntry": false,
                   "cwd": "${workspaceFolder}",
                   "environment": [],

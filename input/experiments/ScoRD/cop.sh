@@ -1,0 +1,10 @@
+/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence gcol_kernel-4-2.c > gcol_kernel-4-2.out 2>&1
+/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence gcol_kernel-5-2.c > gcol_kernel-5-2.out 2>&1
+/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence gcol_kernel-7-2.c > gcol_kernel-7-2.out 2>&1
+/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence gcol_kernel-10-2.c > gcol_kernel-10-2.out 2>&1
+/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence gcol_kernel-15-2.c > gcol_kernel-15-2.out 2>&1
+/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence mm_kernel-4-3.c > mm_kernel-4-3.out 2>&1
+/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence mm_kernel-5-3.c > mm_kernel-5-3.out 2>&1
+/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence mm_kernel-7-3.c > mm_kernel-7-3.out 2>&1
+/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence mm_kernel-10-3.c > mm_kernel-10-3.out 2>&1
+/usr/bin/time -v genmc --wb --check-consistency-point=step --check-consistency-type=full --nthreads=11 --stop-on-race --disable-barrier-divergence mm_kernel-15-3.c > mm_kernel-15-3.out 2>&1

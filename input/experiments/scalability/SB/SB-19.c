@@ -1,0 +1,482 @@
+#include <pthread.h>
+#include <stdatomic.h>
+#include <assert.h>
+
+void __VERIFIER_memory_scope_work_group()       ;
+void __VERIFIER_memory_scope_device()           ;
+void __VERIFIER_thread_global_id(int a)         ;
+void __VERIFIER_thread_local_id(int a)          ;
+void __VERIFIER_thread_group_id(int a)          ;
+void __VERIFIER_thread_kernel_id(int a)         ;
+void __VERIFIER_syncthread()                    ;
+void __VERIFIER_memory_scope_system()           ;
+void __VERIFIER_weak_access()                   ;
+void __VERIFIER_ret_CAS()                       ;
+void __VERIFIER_groupsize(int localWorkSize)    ;
+atomic_int vars[19]; 
+atomic_int atom_0_r1_0_eq; 
+atomic_int atom_1_r2_0_eq; 
+atomic_int atom_2_r3_0_eq; 
+atomic_int atom_3_r4_0_eq; 
+atomic_int atom_4_r5_0_eq; 
+atomic_int atom_5_r6_0_eq; 
+atomic_int atom_6_r7_0_eq; 
+atomic_int atom_7_r8_0_eq; 
+atomic_int atom_8_r9_0_eq; 
+atomic_int atom_9_r10_0_eq; 
+atomic_int atom_10_r11_0_eq; 
+atomic_int atom_11_r12_0_eq; 
+atomic_int atom_12_r13_0_eq; 
+atomic_int atom_13_r14_0_eq; 
+atomic_int atom_14_r15_0_eq; 
+atomic_int atom_15_r16_0_eq; 
+atomic_int atom_16_r17_0_eq; 
+atomic_int atom_17_r18_0_eq; 
+atomic_int atom_18_r0_0_eq; 
+
+
+
+void *t0(void *arg){
+label_1:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(0);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[0], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v2_r1 = atomic_load_explicit(&vars[1], memory_order_acquire);
+  int v76 = (v2_r1==0);
+  atomic_store_explicit(&atom_0_r1_0_eq, v76, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t1(void *arg){
+label_2:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(1);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[1], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v4_r2 = atomic_load_explicit(&vars[2], memory_order_acquire);
+  int v77 = (v4_r2==0);
+  atomic_store_explicit(&atom_1_r2_0_eq, v77, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t2(void *arg){
+label_3:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(2);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[2], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v6_r3 = atomic_load_explicit(&vars[3], memory_order_acquire);
+  int v78 = (v6_r3==0);
+  atomic_store_explicit(&atom_2_r3_0_eq, v78, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t3(void *arg){
+label_4:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(3);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[3], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v8_r4 = atomic_load_explicit(&vars[4], memory_order_acquire);
+  int v79 = (v8_r4==0);
+  atomic_store_explicit(&atom_3_r4_0_eq, v79, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t4(void *arg){
+label_5:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(4);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[4], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v10_r5 = atomic_load_explicit(&vars[5], memory_order_acquire);
+  int v80 = (v10_r5==0);
+  atomic_store_explicit(&atom_4_r5_0_eq, v80, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t5(void *arg){
+label_6:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(5);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[5], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v12_r6 = atomic_load_explicit(&vars[6], memory_order_acquire);
+  int v81 = (v12_r6==0);
+  atomic_store_explicit(&atom_5_r6_0_eq, v81, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t6(void *arg){
+label_7:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(6);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[6], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v14_r7 = atomic_load_explicit(&vars[7], memory_order_acquire);
+  int v82 = (v14_r7==0);
+  atomic_store_explicit(&atom_6_r7_0_eq, v82, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t7(void *arg){
+label_8:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(7);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[7], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v16_r8 = atomic_load_explicit(&vars[8], memory_order_acquire);
+  int v83 = (v16_r8==0);
+  atomic_store_explicit(&atom_7_r8_0_eq, v83, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t8(void *arg){
+label_9:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(8);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[8], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v18_r9 = atomic_load_explicit(&vars[9], memory_order_acquire);
+  int v84 = (v18_r9==0);
+  atomic_store_explicit(&atom_8_r9_0_eq, v84, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t9(void *arg){
+label_10:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(9);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[9], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v20_r10 = atomic_load_explicit(&vars[10], memory_order_acquire);
+  int v85 = (v20_r10==0);
+  atomic_store_explicit(&atom_9_r10_0_eq, v85, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t10(void *arg){
+label_11:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(10);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[10], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v22_r11 = atomic_load_explicit(&vars[11], memory_order_acquire);
+  int v86 = (v22_r11==0);
+  atomic_store_explicit(&atom_10_r11_0_eq, v86, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t11(void *arg){
+label_12:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(11);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[11], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v24_r12 = atomic_load_explicit(&vars[12], memory_order_acquire);
+  int v87 = (v24_r12==0);
+  atomic_store_explicit(&atom_11_r12_0_eq, v87, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t12(void *arg){
+label_13:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(12);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[12], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v26_r13 = atomic_load_explicit(&vars[13], memory_order_acquire);
+  int v88 = (v26_r13==0);
+  atomic_store_explicit(&atom_12_r13_0_eq, v88, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t13(void *arg){
+label_14:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(13);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[13], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v28_r14 = atomic_load_explicit(&vars[14], memory_order_acquire);
+  int v89 = (v28_r14==0);
+  atomic_store_explicit(&atom_13_r14_0_eq, v89, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t14(void *arg){
+label_15:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(14);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[14], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v30_r15 = atomic_load_explicit(&vars[15], memory_order_acquire);
+  int v90 = (v30_r15==0);
+  atomic_store_explicit(&atom_14_r15_0_eq, v90, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t15(void *arg){
+label_16:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(15);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[15], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v32_r16 = atomic_load_explicit(&vars[16], memory_order_acquire);
+  int v91 = (v32_r16==0);
+  atomic_store_explicit(&atom_15_r16_0_eq, v91, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t16(void *arg){
+label_17:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(16);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[16], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v34_r17 = atomic_load_explicit(&vars[17], memory_order_acquire);
+  int v92 = (v34_r17==0);
+  atomic_store_explicit(&atom_16_r17_0_eq, v92, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t17(void *arg){
+label_18:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(17);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[17], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v36_r18 = atomic_load_explicit(&vars[18], memory_order_acquire);
+  int v93 = (v36_r18==0);
+  atomic_store_explicit(&atom_17_r18_0_eq, v93, memory_order_release);
+  return NULL;
+}
+
+
+
+
+void *t18(void *arg){
+label_19:;
+  __VERIFIER_thread_local_id(0);
+  __VERIFIER_thread_group_id(18);
+  __VERIFIER_thread_kernel_id(0);
+__VERIFIER_memory_scope_device();
+  atomic_store_explicit(&vars[18], 1, memory_order_release);
+__VERIFIER_memory_scope_device();
+  int v38_r0 = atomic_load_explicit(&vars[0], memory_order_acquire);
+  int v94 = (v38_r0==0);
+  atomic_store_explicit(&atom_18_r0_0_eq, v94, memory_order_release);
+  return NULL;
+}
+
+
+
+
+int main(int argc, char **argv){
+  atomic_init(&vars[0], 0);
+  atomic_init(&vars[1], 0);
+  atomic_init(&vars[2], 0);
+  atomic_init(&vars[3], 0);
+  atomic_init(&vars[4], 0);
+  atomic_init(&vars[5], 0);
+  atomic_init(&vars[6], 0);
+  atomic_init(&vars[7], 0);
+  atomic_init(&vars[8], 0);
+  atomic_init(&vars[9], 0);
+  atomic_init(&vars[10], 0);
+  atomic_init(&vars[11], 0);
+  atomic_init(&vars[12], 0);
+  atomic_init(&vars[13], 0);
+  atomic_init(&vars[14], 0);
+  atomic_init(&vars[15], 0);
+  atomic_init(&vars[16], 0);
+  atomic_init(&vars[17], 0);
+  atomic_init(&vars[18], 0);
+  pthread_t thr0; 
+  pthread_t thr1; 
+  pthread_t thr2; 
+  pthread_t thr3; 
+  pthread_t thr4; 
+  pthread_t thr5; 
+  pthread_t thr6; 
+  pthread_t thr7; 
+  pthread_t thr8; 
+  pthread_t thr9; 
+  pthread_t thr10; 
+  pthread_t thr11; 
+  pthread_t thr12; 
+  pthread_t thr13; 
+  pthread_t thr14; 
+  pthread_t thr15; 
+  pthread_t thr16; 
+  pthread_t thr17; 
+  pthread_t thr18; 
+
+
+  pthread_create(&thr0, NULL , t0, NULL);
+  pthread_create(&thr1, NULL , t1, NULL);
+  pthread_create(&thr2, NULL , t2, NULL);
+  pthread_create(&thr3, NULL , t3, NULL);
+  pthread_create(&thr4, NULL , t4, NULL);
+  pthread_create(&thr5, NULL , t5, NULL);
+  pthread_create(&thr6, NULL , t6, NULL);
+  pthread_create(&thr7, NULL , t7, NULL);
+  pthread_create(&thr8, NULL , t8, NULL);
+  pthread_create(&thr9, NULL , t9, NULL);
+  pthread_create(&thr10, NULL , t10, NULL);
+  pthread_create(&thr11, NULL , t11, NULL);
+  pthread_create(&thr12, NULL , t12, NULL);
+  pthread_create(&thr13, NULL , t13, NULL);
+  pthread_create(&thr14, NULL , t14, NULL);
+  pthread_create(&thr15, NULL , t15, NULL);
+  pthread_create(&thr16, NULL , t16, NULL);
+  pthread_create(&thr17, NULL , t17, NULL);
+  pthread_create(&thr18, NULL , t18, NULL);
+
+  pthread_join(thr0,NULL);
+  pthread_join(thr1,NULL);
+  pthread_join(thr2,NULL);
+  pthread_join(thr3,NULL);
+  pthread_join(thr4,NULL);
+  pthread_join(thr5,NULL);
+  pthread_join(thr6,NULL);
+  pthread_join(thr7,NULL);
+  pthread_join(thr8,NULL);
+  pthread_join(thr9,NULL);
+  pthread_join(thr10,NULL);
+  pthread_join(thr11,NULL);
+  pthread_join(thr12,NULL);
+  pthread_join(thr13,NULL);
+  pthread_join(thr14,NULL);
+  pthread_join(thr15,NULL);
+  pthread_join(thr16,NULL);
+  pthread_join(thr17,NULL);
+  pthread_join(thr18,NULL);
+
+  int v39 = atomic_load_explicit(&atom_0_r1_0_eq, memory_order_acquire);
+  int v40 = atomic_load_explicit(&atom_1_r2_0_eq, memory_order_acquire);
+  int v41 = atomic_load_explicit(&atom_2_r3_0_eq, memory_order_acquire);
+  int v42 = atomic_load_explicit(&atom_3_r4_0_eq, memory_order_acquire);
+  int v43 = atomic_load_explicit(&atom_4_r5_0_eq, memory_order_acquire);
+  int v44 = atomic_load_explicit(&atom_5_r6_0_eq, memory_order_acquire);
+  int v45 = atomic_load_explicit(&atom_6_r7_0_eq, memory_order_acquire);
+  int v46 = atomic_load_explicit(&atom_7_r8_0_eq, memory_order_acquire);
+  int v47 = atomic_load_explicit(&atom_8_r9_0_eq, memory_order_acquire);
+  int v48 = atomic_load_explicit(&atom_9_r10_0_eq, memory_order_acquire);
+  int v49 = atomic_load_explicit(&atom_10_r11_0_eq, memory_order_acquire);
+  int v50 = atomic_load_explicit(&atom_11_r12_0_eq, memory_order_acquire);
+  int v51 = atomic_load_explicit(&atom_12_r13_0_eq, memory_order_acquire);
+  int v52 = atomic_load_explicit(&atom_13_r14_0_eq, memory_order_acquire);
+  int v53 = atomic_load_explicit(&atom_14_r15_0_eq, memory_order_acquire);
+  int v54 = atomic_load_explicit(&atom_15_r16_0_eq, memory_order_acquire);
+  int v55 = atomic_load_explicit(&atom_16_r17_0_eq, memory_order_acquire);
+  int v56 = atomic_load_explicit(&atom_17_r18_0_eq, memory_order_acquire);
+  int v57 = atomic_load_explicit(&atom_18_r0_0_eq, memory_order_acquire);
+  int v58_conj = v56 & v57;
+  int v59_conj = v55 & v58_conj;
+  int v60_conj = v54 & v59_conj;
+  int v61_conj = v53 & v60_conj;
+  int v62_conj = v52 & v61_conj;
+  int v63_conj = v51 & v62_conj;
+  int v64_conj = v50 & v63_conj;
+  int v65_conj = v49 & v64_conj;
+  int v66_conj = v48 & v65_conj;
+  int v67_conj = v47 & v66_conj;
+  int v68_conj = v46 & v67_conj;
+  int v69_conj = v45 & v68_conj;
+  int v70_conj = v44 & v69_conj;
+  int v71_conj = v43 & v70_conj;
+  int v72_conj = v42 & v71_conj;
+  int v73_conj = v41 & v72_conj;
+  int v74_conj = v40 & v73_conj;
+  int v75_conj = v39 & v74_conj;
+  if (v75_conj == 1) assert(0);
+  return 0;
+}
