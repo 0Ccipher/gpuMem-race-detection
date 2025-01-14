@@ -64,11 +64,11 @@ void *kernel1( void *arg) {
       }    
       else{
             // while(atomicExch(&flag, 0) == 0) {}
-            __VERIFIER_memory_scope_device();
+            __VERIFIER_memory_scope_work_group();
             if(atomic_exchange_explicit(&flag, 0,memory_order_relaxed) == 1){
-                  __VERIFIER_memory_scope_device();
+                  __VERIFIER_memory_scope_work_group();
                    int a = atomic_load_explicit(&data[0],memory_order_relaxed);
-                  __VERIFIER_memory_scope_device();
+                  __VERIFIER_memory_scope_work_group();
                   atomic_exchange_explicit(&flag, a,memory_order_relaxed);
             }
       }

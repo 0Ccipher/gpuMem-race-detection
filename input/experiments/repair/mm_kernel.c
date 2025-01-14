@@ -204,7 +204,7 @@ void matMultKernel(int global_id, int group_id, int local_id, int kernel_id)
                         C[i * WARP_SIZE + tid + row * cB] += *tempC;
                         __VERIFIER_memory_scope_device();
                          atomic_thread_fence(memory_order_seq_cst);
-                        __VERIFIER_memory_scope_device();
+                        __VERIFIER_memory_scope_work_group();
                         atomic_exchange(&gl_lock[(i * WARP_SIZE + tid + row * cB) % NTHREADS], 0);
                         successful = true;
                     }

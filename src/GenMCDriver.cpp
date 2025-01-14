@@ -2388,10 +2388,14 @@ void GenMCDriver::reportRace(Event pos, Event confEvent /* = INIT */)
 	else{
 		e2 = confEvent;
 	}
-	string scope1 = raceLab1->getScope()==1? "DV" : "WG";
-	scope1 = (raceLab1->getScope()==3 && scope1!="DV")? "SYS" : "WG";
-	string scope2 = raceLab2->getScope()==1? "DV" : "WG";
-	scope2 = (raceLab2->getScope()==3 && scope2!="DV")? "SYS" : "WG";
+	string scope1 = "";
+	if(raceLab1->getScope()==1) scope1="DV";
+	if(raceLab1->getScope()==2) scope1="WG";
+	if(raceLab1->getScope()==3) scope1="SYS";
+	string scope2 = "";
+	if(raceLab2->getScope()==1) scope2="DV";
+	if(raceLab2->getScope()==2) scope2="WG";
+	if(raceLab2->getScope()==3) scope2="SYS";
 	string s1 = (llvm::isa<WriteLabel>(raceLab1))? "Wr":"Rd";
 	string s2 = (llvm::isa<WriteLabel>(raceLab2))? "Wr":"Rd";
 	WARN("Racey "+s1+"( " + to_string(pos.thread) + ","+ to_string(pos.index) + "), "+s2+"(" 

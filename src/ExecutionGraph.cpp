@@ -923,17 +923,17 @@ bool ExecutionGraph::isScopeInclusive(const Event i , const Event j) const
 {
 	const EventLabel *labi = getEventLabel(i);
 	const EventLabel *labj = getEventLabel(j);
-	if ((labi->getScope()==2 && (labj->getScope()==2 || labj->getScope()==1 || labj->getScope()==3) 
+	if ((labi->getScope()==2 && labj->getScope()==2
 			&& labi->getKernelId() == labj->getKernelId() 
-			&& labi->getGroupId() == labj->getGroupId()) 		|| 
-		(labj->getScope()==2 && (labi->getScope()==2 || labi->getScope()==1 || labi->getScope()==3) 
-			&& labi->getKernelId() == labj->getKernelId() 
-			&& labi->getGroupId() == labj->getGroupId()) 		||
-		(labi->getScope()==1 && (labj->getScope()==1 || labj->getScope()==3) 
-			&& labi->getKernelId() == labj->getKernelId()) 		||
-		(labj->getScope()==1 && (labi->getScope()==1 || labi->getScope()==3) 
-			&& labi->getKernelId() == labj->getKernelId()) 		||
-		(labi->getScope()==3 && labj->getScope()==3) 			|| 
+			&& labi->getGroupId() == labj->getGroupId()) 						|| 
+		(labi->getScope()==1 && (labj->getScope()==1 || labj->getScope()==2) 
+			&& labi->getKernelId() == labj->getKernelId()) 						||
+		(labj->getScope()==1 && (labi->getScope()==1 || labi->getScope()==2) 
+			&& labi->getKernelId() == labj->getKernelId()) 						||
+		(labi->getScope()==3 && (labj->getScope()==3 || labj->getScope()==1
+							 || labj->getScope()==2)) 							|| 
+		(labj->getScope()==3 && (labi->getScope()==3 || labi->getScope()==1 
+					|| labi->getScope()==2))    								||
 		(labi->getGroupId() == -1 && labj->getGroupId() == -1)) {
 			return true;
 	}
@@ -944,17 +944,16 @@ bool ExecutionGraph::isScopeInclusive(const Event i , const Event j) const
 bool ExecutionGraph::isScopeInclusive(const Event i , int scope, int group , int kernel) const
 {
 	const EventLabel *labi = getEventLabel(i);
-	if ((labi->getScope()==2 && (scope==2 || scope==1  || scope==3) 
+	if ((labi->getScope()==2 && (scope==2) 
 			&& labi->getKernelId() == kernel 
-			&& labi->getGroupId() == group) 		|| 
-		(scope==2 && (labi->getScope()==2 || labi->getScope()==1 || labi->getScope()==3)
-			&& labi->getKernelId() == kernel 
-			&& labi->getGroupId() == group) 		||
-		(labi->getScope()==1 && (scope ==1 || scope==3)
-			&& labi->getKernelId() == kernel) 		||
-		(scope==1 && (labi->getScope()==1 || labi->getScope()==3)
-			&& labi->getKernelId() == kernel ) 		||
-		(labi->getScope()==3 && scope ==3) 			|| 
+			&& labi->getGroupId() == group) 									|| 
+		(labi->getScope()==1 && (scope ==1 || scope==2)
+			&& labi->getKernelId() == kernel) 									||
+		(scope==1 && (labi->getScope()==1 || labi->getScope()==2)
+			&& labi->getKernelId() == kernel ) 									||
+		(labi->getScope()==3 && (scope ==1 || scope==2 || scope ==3)) 			|| 
+		(scope==3 && (labi->getScope()==3 || labi->getScope()==1 
+					|| labi->getScope()==2)) 									|| 
 		(labi->getGroupId() == -1 && group == -1)) {
 			return true;
 	}

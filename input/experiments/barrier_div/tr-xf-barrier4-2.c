@@ -50,25 +50,25 @@ pthread_barrier_t barg[GROUPS];
 #ifdef FAIL1
 #define mo1 memory_order_relaxed
 #else
-#define mo1 memory_order_acquire
+#define mo1 memory_order_seq_cst
 #endif
 
 #ifdef FAIL2
 #define mo2 memory_order_relaxed
 #else
-#define mo2 memory_order_release
+#define mo2 memory_order_seq_cst
 #endif
 
 #ifdef FAIL3
 #define mo3 memory_order_relaxed
 #else
-#define mo3 memory_order_release
+#define mo3 memory_order_seq_cst
 #endif
 
 #ifdef FAIL4
 #define mo4 memory_order_relaxed
 #else
-#define mo4 memory_order_acquire
+#define mo4 memory_order_seq_cst
 #endif
 
 atomic_int flag[] = {0, 0, 0, 0, 0, 0, 0, 0};

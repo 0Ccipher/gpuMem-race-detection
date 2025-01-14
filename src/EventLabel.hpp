@@ -248,7 +248,7 @@ public:
 private:
 	/*IF it is barrier*/
 	int bid = -1;
-	/*Scope of the event 1=device , 2=work-group */
+	/*Scope of the event 1=device , 2=work-group, 3-sys*/
 	short int scope = -1;
 	/*Work grpup of this event*/
 	int group_id = -1;

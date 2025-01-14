@@ -7,7 +7,7 @@
 #include <limits.h>
 
 
-#define NBLOCKS 8
+#define NBLOCKS 5
 #define NTHREADS 1
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
@@ -25,8 +25,10 @@ void __VERIFIER_thread_group_id(int a)          ;
 void __VERIFIER_thread_kernel_id(int a)         ;
 void __VERIFIER_syncthread()                    ;
 void __VERIFIER_groupsize(int localWorkSize)    ;
+void __VERIFIER_weak_access()                   ;
 
-int data[1];
+
+atomic_int data[1];
 atomic_int lock = 0;
 
 
@@ -63,9 +65,8 @@ void *kernel1( void *arg) {
             if(atomic_compare_exchange_strong(&lock, &expected1,desired) == 0){
                   __VERIFIER_memory_scope_work_group();
                   atomic_thread_fence(memory_order_seq_cst);
-                  data[0]=1;
-                //    __VERIFIER_memory_scope_device();
-                //   atomic_store_explicit(&data[0], 1,memory_order_seq_cst);
+                __VERIFIER_memory_scope_device();
+                  atomic_store_explicit(&data[0], 1,memory_order_seq_cst);
                   __VERIFIER_memory_scope_work_group();
                   atomic_thread_fence(memory_order_seq_cst);
                   __VERIFIER_memory_scope_work_group();
@@ -79,9 +80,9 @@ void *kernel1( void *arg) {
             if(atomic_compare_exchange_strong(&lock, &expected2,desired) == 0){
                   __VERIFIER_memory_scope_work_group();
                   atomic_thread_fence(memory_order_seq_cst);
-                  data[0]=2;
-                //    __VERIFIER_memory_scope_device();
-                //   atomic_store_explicit(&data[0], 2,memory_order_seq_cst);
+                  // data[0]=2;
+                  __VERIFIER_memory_scope_device();
+                  atomic_store_explicit(&data[0], 2,memory_order_seq_cst);
                   __VERIFIER_memory_scope_work_group();
                   atomic_thread_fence(memory_order_seq_cst);
                   __VERIFIER_memory_scope_device();

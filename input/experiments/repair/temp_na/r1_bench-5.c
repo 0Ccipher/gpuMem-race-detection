@@ -7,8 +7,8 @@
 #include <limits.h>
 
 
-#define NBLOCKS 4
-#define NTHREADS 2
+#define NBLOCKS 5
+#define NTHREADS 1
 
 #define WORK_ITEMS_PER_GROUP NTHREADS
 #define WORK_ITEMS_PER_KERNEL (NTHREADS * NBLOCKS)
@@ -25,6 +25,8 @@ void __VERIFIER_thread_group_id(int a)          ;
 void __VERIFIER_thread_kernel_id(int a)         ;
 void __VERIFIER_syncthread()                    ;
 void __VERIFIER_groupsize(int localWorkSize)    ;
+void __VERIFIER_weak_access()                   ;
+
 
 atomic_int data[1];
 atomic_int lock = 0;
@@ -59,12 +61,12 @@ void *kernel1( void *arg) {
       int desired = 1;
       if(group_id == 0){
             //  while(atomicCAS_block(&lock, 0, 1) != 0) {}
-            __VERIFIER_memory_scope_work_group();
-            if(atomic_compare_exchange_strong_explicit(&lock, &expected1,desired,memory_order_relaxed,memory_order_relaxed) == 0){
+            __VERIFIER_memory_scope_device();
+            if(atomic_compare_exchange_strong(&lock, &expected1,desired) == 0){
                   __VERIFIER_memory_scope_work_group();
                   atomic_thread_fence(memory_order_seq_cst);
-                   __VERIFIER_memory_scope_device();
-                  atomic_store_explicit(&data[0], 1,memory_order_relaxed);
+                  __VERIFIER_weak_access();
+                  atomic_store_explicit(&data[0], 1,memory_order_seq_cst);
                   __VERIFIER_memory_scope_work_group();
                   atomic_thread_fence(memory_order_seq_cst);
                   __VERIFIER_memory_scope_work_group();
@@ -74,16 +76,17 @@ void *kernel1( void *arg) {
       }    
       else{
             //  while(atomicCAS_block(&lock, 0, 1) != 0) {}
-            __VERIFIER_memory_scope_work_group();
-            if(atomic_compare_exchange_strong_explicit(&lock, &expected2,desired,memory_order_relaxed,memory_order_relaxed) == 0){
+            __VERIFIER_memory_scope_device();
+            if(atomic_compare_exchange_strong(&lock, &expected2,desired) == 0){
                   __VERIFIER_memory_scope_work_group();
                   atomic_thread_fence(memory_order_seq_cst);
-                   __VERIFIER_memory_scope_device();
-                  atomic_store_explicit(&data[0], 2,memory_order_relaxed);
+                  // data[0]=2;
+                  __VERIFIER_memory_scope_device();
+                  atomic_store_explicit(&data[0], 2,memory_order_seq_cst);
                   __VERIFIER_memory_scope_work_group();
                   atomic_thread_fence(memory_order_seq_cst);
                   __VERIFIER_memory_scope_work_group();
-                  atomic_exchange_explicit(&lock, 0,memory_order_relaxed);
+                  atomic_exchange_explicit(&lock, 0,memory_order_seq_cst);
             }
       }
     
