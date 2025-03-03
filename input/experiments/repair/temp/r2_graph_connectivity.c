@@ -52,7 +52,7 @@ void __VERIFIER_groupsize(int localWorkSize)    ;
  *
  *************************************************/
 #define Edges 3
-#define vertices 4
+#define vertices 3
 atomic_int V=vertices;
 atomic_int E=Edges;
 atomic_int edgeSetU[Edges];
@@ -72,11 +72,11 @@ void input(){
     __VERIFIER_memory_scope_device();
     atomic_init(&edgeSetV[0],1);
     __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetU[1],0);
+    atomic_init(&edgeSetU[1],2);
     __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetV[1],2);
+    atomic_init(&edgeSetV[1],1);
      __VERIFIER_memory_scope_device();
-    atomic_init(&edgeSetU[2],1);
+    atomic_init(&edgeSetU[2],0);
     __VERIFIER_memory_scope_device();
     atomic_init(&edgeSetV[2],2);
     //  __VERIFIER_memory_scope_device();
